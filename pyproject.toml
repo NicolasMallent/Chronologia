@@ -20,7 +20,7 @@ dev = ["pytest>=8", "ruff>=0.5"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-chronologia = ["defaults/*.json", "translations/*.qm"]
+chronologia = ["defaults/*.json", "translations/*.qm", "resources/*.png"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

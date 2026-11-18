@@ -52,3 +52,9 @@ def test_fichier_invalide_ne_plante_pas(window, tmp_path, monkeypatch):
     bad = tmp_path / "bad.csv"
     bad.write_text("a,b\n1,2\n", encoding="utf-8")
     assert window.load_file(bad) is False
+
+
+def test_auto_diagnostic_de_l_installation(window):
+    from chronologia.app import run_smoke_test
+
+    assert run_smoke_test(window) == 0
