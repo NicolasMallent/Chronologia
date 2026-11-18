@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "categories": [
+    {"name": "Contexte politique international", "color": "black"},
+    {"name": "Contexte politique français", "color": "orange"},
+    {"name": "Evènements historiques", "color": "red"},
+    {"name": "Législation internationale", "color": "steelblue"},
+    {"name": "Législation française", "color": "skyblue"},
+    {"name": "Législation agricole internationale", "color": "blue"},
+    {"name": "Législation agricole française", "color": "green"},
+    {"name": "Luttes agricoles", "color": "yellow"},
+    {"name": "Manifestations citoyennes", "color": "magenta"},
+    {"name": "Syndicalisme agricole", "color": "grey"}
+  ]
+}
