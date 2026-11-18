@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Chronologia
+GenericName=Timeline viewer
+Comment=Create printable timelines from a CSV file
+Comment[fr]=Créer des frises chronologiques imprimables à partir d'un CSV
+Comment[es]=Crear cronologías imprimibles a partir de un CSV
+Exec=chronologia %f
+Icon=chronologia
+Terminal=false
+Categories=Office;Education;
+MimeType=text/csv;
+StartupWMClass=chronologia
