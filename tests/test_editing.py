@@ -227,3 +227,45 @@ def test_evenement_ajoute_est_selectionne(window):
     window.add_event(make("Nouveau"))
     assert window.view.selected_event is window.document.events[-1]
     assert window.view.selected_event.title == "Nouveau"
+
+
+def _wheel(view, delta_y, modifiers=None):
+    from PySide6.QtCore import QPoint, QPointF, Qt
+    from PySide6.QtGui import QWheelEvent
+    from PySide6.QtWidgets import QApplication
+
+    pos = QPointF(300, 200)
+    event = QWheelEvent(
+        pos,
+        view.viewport().mapToGlobal(pos),
+        QPoint(0, 0),
+        QPoint(0, delta_y),
+        Qt.MouseButton.NoButton,
+        modifiers or Qt.KeyboardModifier.NoModifier,
+        Qt.ScrollPhase.NoScrollPhase,
+        False,
+    )
+    QApplication.sendEvent(view.viewport(), event)
+
+
+def test_molette_zoome_et_maj_molette_defile(window):
+    from PySide6.QtCore import Qt
+
+    window.resize(1400, 800)
+    window.show()
+    view = window.view
+    before = view._ppy
+    _wheel(view, 120)
+    assert view._ppy > before
+    _wheel(view, -120)
+    assert view._ppy == pytest.approx(before)
+    _wheel(view, 120, Qt.KeyboardModifier.ControlModifier)  # Ctrl + molette zoome aussi
+    assert view._ppy > before
+
+    view.set_scale(before)
+    bar = view.verticalScrollBar()
+    bar.setRange(0, 1000)
+    bar.setValue(500)
+    _wheel(view, -120, Qt.KeyboardModifier.ShiftModifier)
+    assert bar.value() > 500 and view._ppy == pytest.approx(before)
+    window.hide()

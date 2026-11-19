@@ -194,11 +194,17 @@ class TimelineView(QGraphicsView):
         self.horizontalScrollBar().setValue(0)
 
     def wheelEvent(self, event) -> None:
-        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            factor = 1.15 if event.angleDelta().y() > 0 else 1 / 1.15
-            self.zoom_by(factor, event.position().x())
+        """Molette : zoom autour du curseur. Maj + molette : défilement vertical."""
+        delta = event.angleDelta()
+        shift = bool(event.modifiers() & Qt.KeyboardModifier.ShiftModifier)
+        if shift:
+            bar = self.verticalScrollBar()
+            bar.setValue(bar.value() - (delta.y() or delta.x()))
             event.accept()
-        else:
+        elif delta.y() != 0:
+            self.zoom_by(1.15 ** (delta.y() / 120), event.position().x())
+            event.accept()
+        else:  # défilement horizontal (pavé tactile)
             super().wheelEvent(event)
 
     # --- interactions d'édition ------------------------------------------------------
