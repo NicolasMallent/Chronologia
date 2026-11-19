@@ -125,3 +125,105 @@ def test_exemple_aller_retour_apres_edition(app, tmp_path):
     assert again.issues == [] and len(again.events) == 223
     assert again.events[0].title == "Modifié"
     w.close()
+
+
+def test_application_des_categories(window, monkeypatch):
+    from chronologia import main_window
+    from chronologia.categories import CategoryRegistry
+
+    saved = []
+    monkeypatch.setattr(main_window, "save_registry", lambda reg: saved.append(reg))
+    registry = CategoryRegistry()
+    registry.add("Seule", "red")
+    window.apply_registry(registry)
+    assert saved == [registry]
+    assert window._registry is registry
+
+
+def test_dialogue_categories_edite_une_copie(app):
+    from chronologia.categories import CategoryRegistry
+    from chronologia.categories_dialog import CategoriesDialog, CategoryEditDialog
+
+    original = CategoryRegistry()
+    original.add("A", "red")
+    original.add("B", "blue")
+    dialog = CategoriesDialog(original)
+    dialog._list.setCurrentRow(1)
+    dialog._move(-1)
+    assert [c.name for c in dialog.registry()] == ["B", "A"]
+    assert [c.name for c in original] == ["A", "B"]  # l'original n'est pas touché
+
+    edit = CategoryEditDialog(dialog.registry(), dialog.registry().for_color("red"))
+    edit.name.setText("B")  # doublon
+    assert not edit._buttons.button(edit._buttons.StandardButton.Ok).isEnabled()
+    assert edit._error.text()
+    edit.name.setText("Renommée")
+    assert edit._buttons.button(edit._buttons.StandardButton.Ok).isEnabled()
+
+
+def test_suppression_depuis_la_boite_de_modification(window, monkeypatch):
+    from PySide6.QtWidgets import QDialogButtonBox, QMessageBox
+
+    from chronologia.event_dialog import EventDialog
+
+    window.add_event(make("A supprimer"))
+    event = window.document.events[-1]
+    dialog = EventDialog(window._registry, event=event)
+    buttons = dialog.findChildren(QDialogButtonBox)[0]
+    delete = next(b for b in buttons.buttons() if b.text() == dialog.tr("Supprimer"))
+    delete.click()
+    assert dialog.delete_requested
+
+    # la fenêtre demande confirmation puis supprime
+    monkeypatch.setattr(EventDialog, "exec", lambda self: self._request_delete() or 0)
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Yes)
+    window.edit_event(event)
+    assert "A supprimer" not in titles(window)
+
+
+def test_creation_n_a_pas_de_bouton_supprimer(window):
+    from PySide6.QtWidgets import QDialogButtonBox
+
+    from chronologia.event_dialog import EventDialog
+
+    dialog = EventDialog(window._registry)
+    buttons = dialog.findChildren(QDialogButtonBox)[0]
+    assert all(b.text() != dialog.tr("Supprimer") for b in buttons.buttons())
+
+
+def test_selection_met_en_valeur_et_suppr_supprime_la_selection(window, monkeypatch):
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QMessageBox
+
+    window.resize(1400, 800)
+    window.show()
+    view = window.view
+    event = window.document.events[0]
+    group = next(g for g, e in view._groups.items() if e is event)
+    center = view.mapFromScene(group.sceneBoundingRect().center())
+
+    QTest.mouseClick(view.viewport(), Qt.MouseButton.LeftButton, pos=QPoint(center))
+    assert view.selected_event is event
+    assert view._halo is not None
+
+    monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.No)
+    asked = []
+    view.deleteRequested.connect(asked.append)
+    QTest.keyClick(view, Qt.Key.Key_Delete)
+    assert asked == [event]
+
+    QTest.keyClick(view, Qt.Key.Key_Escape)
+    assert view.selected_event is None and view._halo is None
+
+    # la sélection survit à un changement d'échelle (reconstruction de la scène)
+    view.select(event)
+    view.zoom_by(1.5)
+    assert view._halo is not None
+    window.hide()
+
+
+def test_evenement_ajoute_est_selectionne(window):
+    window.add_event(make("Nouveau"))
+    assert window.view.selected_event is window.document.events[-1]
+    assert window.view.selected_event.title == "Nouveau"

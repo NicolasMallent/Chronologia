@@ -17,7 +17,8 @@ from PySide6.QtWidgets import (
     QToolBar,
 )
 
-from .categories import load_registry
+from .categories import load_registry, save_registry
+from .categories_dialog import CategoriesDialog
 from .csv_io import CsvFormatError, read_events, write_events
 from .document import Document
 from .event_dialog import EventDialog
@@ -111,9 +112,13 @@ class MainWindow(QMainWindow):
         stack.undoTextChanged.connect(self._update_undo_actions)
         stack.redoTextChanged.connect(self._update_undo_actions)
         self._update_undo_actions()
+        categories_action = QAction(self.tr("&Gérer les catégories…"), self)
+        categories_action.triggered.connect(self.manage_categories)
         edit_menu = self.menuBar().addMenu(self.tr("&Édition"))
         for action in (new_action, self.undo_action, self.redo_action):
             edit_menu.addAction(action)
+        edit_menu.addSeparator()
+        edit_menu.addAction(categories_action)
 
         zoom_in = QAction(self.tr("Zoom +"), self)
         zoom_in.setShortcut(QKeySequence.StandardKey.ZoomIn)
@@ -188,7 +193,10 @@ class MainWindow(QMainWindow):
 
     def edit_event(self, event: Event) -> None:
         dialog = EventDialog(self._registry, event=event, parent=self)
-        if dialog.exec() and (new := dialog.result_event()) is not None:
+        accepted = dialog.exec()
+        if dialog.delete_requested:
+            self.delete_event(event)  # avec confirmation
+        elif accepted and (new := dialog.result_event()) is not None:
             self.replace_event(event, new)
 
     def delete_event(self, event: Event) -> None:
@@ -199,6 +207,29 @@ class MainWindow(QMainWindow):
         )
         if answer == QMessageBox.StandardButton.Yes:
             self.remove_event(event)
+
+    def manage_categories(self) -> None:
+        dialog = CategoriesDialog(self._registry, parent=self)
+        if dialog.exec():
+            self.apply_registry(dialog.registry())
+
+    def apply_registry(self, registry) -> None:
+        """Adopte de nouvelles catégories, les enregistre et rafraîchit l'affichage."""
+        self._registry = registry
+        self.view.set_registry(registry)
+        self.filters.set_categories(self._category_entries(), keep_state=True)
+        try:
+            save_registry(registry)
+        except OSError as exc:
+            QMessageBox.warning(
+                self,
+                self.tr("Catégories"),
+                plain(
+                    self.tr("Catégories appliquées mais non enregistrées : %1").replace(
+                        "%1", str(exc)
+                    )
+                ),
+            )
 
     # Opérations sans dialogue (utilisées par les dialogues et par les tests).
 
@@ -218,6 +249,7 @@ class MainWindow(QMainWindow):
     def _on_document_changed(self, focus: Event | None) -> None:
         self.view.set_events(self.document.events, rebuild=False)
         self.filters.set_categories(self._category_entries(), keep_state=True)
+        self.view.select(focus)  # l'événement ajouté ou modifié est mis en valeur
         if focus is not None:
             self.filters.ensure_checked(self._registry.category_name(focus))
             self.view.reveal(focus)

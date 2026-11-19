@@ -9,6 +9,7 @@ from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import (
     QGraphicsItemGroup,
     QGraphicsPathItem,
+    QGraphicsRectItem,
     QGraphicsScene,
     QGraphicsSimpleTextItem,
     QGraphicsView,
@@ -71,6 +72,9 @@ class TimelineView(QGraphicsView):
         self._font.setPointSizeF(9.0)
         self._matches = 0
         self._groups: dict[QGraphicsItemGroup, Event] = {}
+        self._selected: Event | None = None  # comparé par identité
+        self._halo: QGraphicsRectItem | None = None
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     # --- données ---------------------------------------------------------------------
 
@@ -82,11 +86,46 @@ class TimelineView(QGraphicsView):
         self.rebuild()
         self.fit_width()
 
+    def set_registry(self, registry: CategoryRegistry) -> None:
+        """Change les catégories en gardant filtres, recherche et échelle."""
+        self._registry = registry
+        self.rebuild()
+
     def set_events(self, events: list[Event], rebuild: bool = True) -> None:
         """Met à jour les événements en gardant filtres, recherche et échelle."""
         self._events = events
         if rebuild:
             self.rebuild()
+
+    @property
+    def selected_event(self) -> Event | None:
+        return self._selected
+
+    def select(self, event: Event | None) -> None:
+        """Met un événement en valeur (cadre autour de la barre et du titre) ; ``None`` efface."""
+        self._selected = event
+        self._update_selection()
+
+    def _update_selection(self) -> None:
+        if self._halo is not None:
+            if self._halo.scene() is not None:
+                self._scene.removeItem(self._halo)
+            self._halo = None
+        if self._selected is None:
+            return
+        for group, candidate in self._groups.items():
+            if candidate is self._selected:
+                accent = self.palette().highlight().color()
+                fill = QColor(accent)
+                fill.setAlpha(45)
+                rect = group.sceneBoundingRect().adjusted(-4, -3, 4, 3)
+                halo = QGraphicsRectItem(rect)
+                halo.setPen(QPen(accent, 2.5))
+                halo.setBrush(fill)
+                halo.setZValue(-1)  # sous l'événement : sa couleur reste lisible
+                self._scene.addItem(halo)
+                self._halo = halo
+                return
 
     def reveal(self, event: Event) -> None:
         """Amène un événement dans la zone visible, s'il est affiché."""
@@ -159,6 +198,11 @@ class TimelineView(QGraphicsView):
 
     # --- interactions d'édition ------------------------------------------------------
 
+    def mousePressEvent(self, event) -> None:
+        if event.button() in (Qt.MouseButton.LeftButton, Qt.MouseButton.RightButton):
+            self.select(self._event_at(event.position().toPoint()))
+        super().mousePressEvent(event)
+
     def _event_at(self, pos) -> Event | None:
         item = self.itemAt(pos)
         while item is not None and item not in self._groups:
@@ -172,6 +216,17 @@ class TimelineView(QGraphicsView):
             event.accept()
         else:
             super().mouseDoubleClickEvent(event)
+
+    def keyPressEvent(self, event) -> None:
+        """Suppr : supprime l'événement sélectionné (après confirmation) ; Échap : désélectionne."""
+        if event.key() == Qt.Key.Key_Delete and self._selected is not None:
+            self.deleteRequested.emit(self._selected)
+            event.accept()
+        elif event.key() == Qt.Key.Key_Escape and self._selected is not None:
+            self.select(None)
+            event.accept()
+        else:
+            super().keyPressEvent(event)
 
     def contextMenuEvent(self, event) -> None:
         found = self._event_at(event.pos())
@@ -196,6 +251,7 @@ class TimelineView(QGraphicsView):
     def rebuild(self) -> None:
         self._scene.clear()
         self._groups = {}
+        self._halo = None
         measure, line_height = make_measurer(self._font)
         opts = LayoutOptions(px_per_year=self._ppy, line_height=line_height, wrap=False)
         self._layout = compute_layout(
@@ -222,6 +278,7 @@ class TimelineView(QGraphicsView):
                 HEADER + layout.height + 2 * MARGIN,
             )
         )
+        self._update_selection()
         self.layoutChanged.emit()
         self.viewport().update()
 

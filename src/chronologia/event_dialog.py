@@ -41,6 +41,7 @@ class EventDialog(QDialog):
         super().__init__(parent)
         self._registry = registry
         self._result: Event | None = None
+        self.delete_requested = False
         self.setWindowTitle(
             self.tr("Modifier l'événement") if event else self.tr("Nouvel événement")
         )
@@ -88,6 +89,12 @@ class EventDialog(QDialog):
         )
         self._buttons.accepted.connect(self._accept)
         self._buttons.rejected.connect(self.reject)
+        if event is not None:
+            delete = self._buttons.addButton(
+                self.tr("Supprimer"), QDialogButtonBox.ButtonRole.DestructiveRole
+            )
+            delete.setAutoDefault(False)
+            delete.clicked.connect(self._request_delete)
         layout = QVBoxLayout(self)
         layout.addLayout(form)
         layout.addWidget(self._error)
@@ -168,6 +175,10 @@ class EventDialog(QDialog):
         shown = [messages[code] for code in errors.values() if code != event_form.TITLE_EMPTY]
         self._error.setText("\n".join(shown))
         self._buttons.button(QDialogButtonBox.StandardButton.Ok).setEnabled(event is not None)
+
+    def _request_delete(self) -> None:
+        self.delete_requested = True
+        self.reject()
 
     def _accept(self) -> None:
         if self._result is not None:
