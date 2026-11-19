@@ -28,3 +28,7 @@ Construction locale du `.deb` : `pip install -r packaging/requirements-build.txt
 ## Confidentialité et sécurité
 L'application est locale, sans télémétrie ni accès réseau : voir [PRIVACY.md](PRIVACY.md) (RGPD) et
 [SECURITY.md](SECURITY.md) (mesures, limites, signalement d'une vulnérabilité).
+
+## Licence
+
+MIT (voir [LICENSE](LICENSE)). Les composants tiers, notamment PySide6 (LGPL-3.0), restent sous leurs propres licences : voir [packaging/THIRD-PARTY-NOTICES.md](packaging/THIRD-PARTY-NOTICES.md).
