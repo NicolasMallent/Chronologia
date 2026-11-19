@@ -24,3 +24,7 @@ les push et pull requests ne lancent que les tests (`ci.yml`).
 Construction locale du `.deb` : `pip install -r packaging/requirements-build.txt`,
 `pyinstaller --noconfirm --clean packaging/chronologia.spec`, puis
 `packaging/deb/build_deb.sh X.Y.Z`.
+
+## Confidentialité et sécurité
+L'application est locale, sans télémétrie ni accès réseau : voir [PRIVACY.md](PRIVACY.md) (RGPD) et
+[SECURITY.md](SECURITY.md) (mesures, limites, signalement d'une vulnérabilité).
