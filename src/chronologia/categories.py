@@ -24,6 +24,8 @@ APP_DIR_NAME = "chronologia"
 CONFIG_FILE_NAME = "categories.json"
 FORMAT_VERSION = 1
 MAX_NAME_LENGTH = 200
+MAX_CATEGORIES = 500
+MAX_CONFIG_BYTES = 1024 * 1024
 
 
 class CategoryError(ValueError):
@@ -87,6 +89,8 @@ class CategoryRegistry:
         return name, color.strip()
 
     def add(self, name: str, color: str) -> Category:
+        if len(self._items) >= MAX_CATEGORIES:
+            raise CategoryError("trop de catégories")
         name, color = self._check(name, color)
         category = Category(name, color)
         self._items.append(category)
@@ -147,6 +151,8 @@ def load_registry(path: Path | None = None) -> tuple[CategoryRegistry, str | Non
     if not path.exists():
         return default_registry(), None
     try:
+        if path.stat().st_size > MAX_CONFIG_BYTES:
+            raise CategoryError("fichier de catégories trop volumineux")
         return CategoryRegistry.from_json(path.read_text(encoding="utf-8")), None
     except (OSError, UnicodeDecodeError, CategoryError) as exc:
         return default_registry(), f"{path} : {exc}"

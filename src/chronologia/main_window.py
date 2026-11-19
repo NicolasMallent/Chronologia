@@ -27,6 +27,7 @@ from .i18n import LANGUAGES, effective_language, save_language
 from .messages import format_error_text, issue_text
 from .model import Event
 from .pdf_export import write_pdf
+from .textutil import plain
 from .timeline_view import TimelineView
 
 MAX_ISSUES_SHOWN = 200
@@ -194,7 +195,7 @@ class MainWindow(QMainWindow):
         answer = QMessageBox.question(
             self,
             self.tr("Supprimer l'événement"),
-            self.tr("Supprimer « %1 » ? (Annulable avec Ctrl+Z)").replace("%1", event.title),
+            plain(self.tr("Supprimer « %1 » ? (Annulable avec Ctrl+Z)").replace("%1", event.title)),
         )
         if answer == QMessageBox.StandardButton.Yes:
             self.remove_event(event)
@@ -240,7 +241,7 @@ class MainWindow(QMainWindow):
             result = read_events(path)
         except (OSError, CsvFormatError) as exc:
             text = format_error_text(exc) if isinstance(exc, CsvFormatError) else str(exc)
-            QMessageBox.critical(self, self.tr("Import impossible"), text)
+            QMessageBox.critical(self, self.tr("Import impossible"), plain(text))
             return False
         self._path = path
         self._lossy = any(i.skipped for i in result.issues)
@@ -275,7 +276,7 @@ class MainWindow(QMainWindow):
         try:
             write_events(path, self.document.events)
         except OSError as exc:
-            QMessageBox.critical(self, self.tr("Enregistrement impossible"), str(exc))
+            QMessageBox.critical(self, self.tr("Enregistrement impossible"), plain(str(exc)))
             return False
         self._path = path
         self._lossy = False
@@ -302,7 +303,7 @@ class MainWindow(QMainWindow):
         try:
             write_pdf(path, plan, dialog.document_title())
         except OSError as exc:
-            QMessageBox.critical(self, self.tr("Export impossible"), str(exc))
+            QMessageBox.critical(self, self.tr("Export impossible"), plain(str(exc)))
             return
         self.statusBar().showMessage(
             self.tr("PDF exporté : %1").replace("%1", Path(path).name), 5000

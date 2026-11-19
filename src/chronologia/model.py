@@ -7,6 +7,11 @@ from dataclasses import dataclass, field
 from .colors import DEFAULT_COLOR_HEX, resolve_color
 from .dates import PartialDate
 
+# Limites de robustesse : un fichier démesuré ne doit pas figer l'application.
+MAX_TITLE_LENGTH = 500
+MAX_SOURCE_LENGTH = 5000
+MAX_EVENTS = 5000
+
 
 @dataclass
 class Event:
@@ -42,6 +47,9 @@ class ImportIssue:
     code: str = ""
     detail: str = ""  # valeur fautive (date ou couleur saisie)
 
+    TITLE_TRUNCATED = "title_truncated"
+    SOURCE_TRUNCATED = "source_truncated"
+    TOO_MANY_EVENTS = "too_many_events"
     EMPTY_TITLE = "empty_title"
     INVALID_START = "invalid_start"
     INVALID_END = "invalid_end"

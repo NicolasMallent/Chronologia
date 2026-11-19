@@ -20,6 +20,7 @@ from .layout import Layout, LayoutItem, LayoutOptions, compute_layout
 from .measure import make_measurer
 from .model import Event
 from .shapes import item_shape_path
+from .textutil import plain
 
 LEFT_COLUMN = 190.0  # noms des catégories, fixes pendant le défilement horizontal
 HEADER = 30.0  # axe des années, fixe pendant le défilement vertical
@@ -252,7 +253,7 @@ class TimelineView(QGraphicsView):
             text.setPos(self._shift + item.label_x, first_y + i * opts.line_height)
             group.addToGroup(text)
 
-        group.setToolTip(event_tooltip(event))
+        group.setToolTip(plain(event_tooltip(event)))
         self._groups[group] = event
         if self._query:
             haystack = _normalize(f"{event.title} {event.source}")

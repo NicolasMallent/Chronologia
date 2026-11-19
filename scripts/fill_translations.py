@@ -167,6 +167,19 @@ T: dict[str, tuple[str, str]] = {
         "The file is too large.",
         "El archivo es demasiado grande.",
     ),
+    "titre trop long : tronqué": ("title too long: truncated", "título demasiado largo: recortado"),
+    "source trop longue : tronquée": (
+        "source too long: truncated",
+        "fuente demasiado larga: recortada",
+    ),
+    "plus de %1 événements : import arrêté": (
+        "more than %1 events: import stopped",
+        "más de %1 eventos: importación detenida",
+    ),
+    "Le fichier est mal formé (autour de la ligne %1).": (
+        "The file is malformed (around row %1).",
+        "El archivo está mal formado (cerca de la fila %1).",
+    ),
     "Modifier…": ("Edit…", "Modificar…"),
     "Supprimer": ("Delete", "Eliminar"),
     "Nouvel événement ici…": ("New event here…", "Nuevo evento aquí…"),

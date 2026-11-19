@@ -14,7 +14,14 @@ from pathlib import Path
 
 from .colors import DEFAULT_COLOR_HEX, resolve_color
 from .dates import DateParseError, parse_date
-from .model import Event, ImportIssue, ImportResult
+from .model import (
+    MAX_EVENTS,
+    MAX_SOURCE_LENGTH,
+    MAX_TITLE_LENGTH,
+    Event,
+    ImportIssue,
+    ImportResult,
+)
 
 REQUIRED_COLUMNS = ("start", "end", "title", "color")
 OPTIONAL_COLUMNS = ("source",)
@@ -31,6 +38,7 @@ class CsvFormatError(ValueError):
     EMPTY_FILE = "empty_file"
     MISSING_COLUMNS = "missing_columns"
     FILE_TOO_LARGE = "file_too_large"
+    MALFORMED = "malformed"
 
     def __init__(self, message: str, code: str = "", detail: str = "") -> None:
         super().__init__(message)
@@ -63,10 +71,12 @@ def _detect_delimiter(header_line: str) -> str:
 
 def read_events(path: str | Path) -> ImportResult:
     """Lit un fichier CSV (UTF-8 avec ou sans BOM, sinon Windows-1252)."""
-    p = Path(path)
-    if p.stat().st_size > MAX_FILE_BYTES:
+    # lecture bornée : un fichier spécial (ex. /dev/zero) ou démesuré ne doit pas saturer la mémoire
+    with open(path, "rb") as f:
+        raw = f.read(MAX_FILE_BYTES + 1)
+    if len(raw) > MAX_FILE_BYTES:
         raise CsvFormatError("fichier trop volumineux", CsvFormatError.FILE_TOO_LARGE)
-    return parse_events(p.read_bytes())
+    return parse_events(raw)
 
 
 def parse_events(raw: bytes) -> ImportResult:
@@ -77,6 +87,8 @@ def parse_events(raw: bytes) -> ImportResult:
         header = next(reader)
     except StopIteration:
         raise CsvFormatError("fichier vide", CsvFormatError.EMPTY_FILE) from None
+    except csv.Error:
+        raise CsvFormatError("fichier mal formé", CsvFormatError.MALFORMED, "1") from None
 
     names = [h.strip().lower() for h in header]
     missing = [c for c in REQUIRED_COLUMNS if c not in names]
@@ -95,10 +107,29 @@ def parse_events(raw: bytes) -> ImportResult:
         return row[i].strip() if i is not None and i < len(row) else ""
 
     result = ImportResult()
-    for row in reader:
+    while True:
+        try:
+            row = next(reader)
+        except StopIteration:
+            break
+        except csv.Error:  # champ démesuré, guillemets incohérents...
+            raise CsvFormatError(
+                "fichier mal formé", CsvFormatError.MALFORMED, str(reader.line_num + 1)
+            ) from None
         line = reader.line_num
         if not any(c.strip() for c in row):
             continue
+        if len(result.events) >= MAX_EVENTS:
+            result.issues.append(
+                ImportIssue(
+                    line,
+                    f"plus de {MAX_EVENTS} événements : import arrêté",
+                    skipped=True,
+                    code=ImportIssue.TOO_MANY_EVENTS,
+                    detail=str(MAX_EVENTS),
+                )
+            )
+            break
         title = _unescape(cell(row, "title"))
         if not title:
             result.issues.append(
@@ -140,7 +171,18 @@ def parse_events(raw: bytes) -> ImportResult:
                 )
             )
             color = DEFAULT_COLOR_HEX
-        result.events.append(Event(start, end, title, color, _unescape(cell(row, "source"))))
+        source = _unescape(cell(row, "source"))
+        if len(title) > MAX_TITLE_LENGTH:
+            title = title[:MAX_TITLE_LENGTH]
+            result.issues.append(
+                ImportIssue(line, "titre tronqué", code=ImportIssue.TITLE_TRUNCATED)
+            )
+        if len(source) > MAX_SOURCE_LENGTH:
+            source = source[:MAX_SOURCE_LENGTH]
+            result.issues.append(
+                ImportIssue(line, "source tronquée", code=ImportIssue.SOURCE_TRUNCATED)
+            )
+        result.events.append(Event(start, end, title, color, source))
     return result
 
 
@@ -159,7 +201,21 @@ def write_events(path: str | Path, events: list[Event]) -> None:
                 writer.writerow(
                     [e.start.to_csv(), e.end.to_csv(), _escape(e.title), e.color, _escape(e.source)]
                 )
+        os.chmod(tmp, _target_mode(target))
         os.replace(tmp, target)
     except BaseException:
         Path(tmp).unlink(missing_ok=True)
         raise
+
+
+def _target_mode(target: Path) -> int:
+    """Droits du fichier écrit : ceux de l'ancien fichier, sinon ceux d'un nouveau fichier.
+
+    (``mkstemp`` crée en 0600 : sans cela, un fichier partagé deviendrait illisible pour les autres.)
+    """
+    try:
+        return target.stat().st_mode & 0o777
+    except FileNotFoundError:
+        umask = os.umask(0)
+        os.umask(umask)
+        return 0o666 & ~umask

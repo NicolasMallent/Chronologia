@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from .colors import resolve_color
 from .dates import DateParseError, parse_date
-from .model import Event
-
-MAX_TITLE_LENGTH = 500
-MAX_SOURCE_LENGTH = 5000
+from .model import MAX_SOURCE_LENGTH, MAX_TITLE_LENGTH, Event
 
 # codes d'erreur, traduits par l'interface
 TITLE_EMPTY = "title_empty"

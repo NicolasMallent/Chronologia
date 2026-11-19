@@ -11,6 +11,14 @@ from .model import ImportIssue
 def issue_text(issue: ImportIssue) -> str:
     """Anomalie d'import, dans la langue de l'interface."""
     code, detail = issue.code, issue.detail
+    if code == ImportIssue.TITLE_TRUNCATED:
+        return QCoreApplication.translate("Messages", "titre trop long : tronqué")
+    if code == ImportIssue.SOURCE_TRUNCATED:
+        return QCoreApplication.translate("Messages", "source trop longue : tronquée")
+    if code == ImportIssue.TOO_MANY_EVENTS:
+        return QCoreApplication.translate(
+            "Messages", "plus de %1 événements : import arrêté"
+        ).replace("%1", detail)
     if code == ImportIssue.EMPTY_TITLE:
         return QCoreApplication.translate("Messages", "titre vide")
     if code == ImportIssue.INVALID_START:
@@ -39,6 +47,10 @@ def format_error_text(error: CsvFormatError) -> str:
     if error.code == CsvFormatError.MISSING_COLUMNS:
         return QCoreApplication.translate(
             "Messages", "Colonnes obligatoires absentes : %1"
+        ).replace("%1", error.detail)
+    if error.code == CsvFormatError.MALFORMED:
+        return QCoreApplication.translate(
+            "Messages", "Le fichier est mal formé (autour de la ligne %1)."
         ).replace("%1", error.detail)
     if error.code == CsvFormatError.FILE_TOO_LARGE:
         return QCoreApplication.translate("Messages", "Le fichier est trop volumineux.")
