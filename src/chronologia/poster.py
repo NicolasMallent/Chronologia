@@ -34,9 +34,13 @@ MARGIN = 24.0
 NAME_COLUMN = 220.0  # colonne des noms de catégories
 NAME_MAX_LINES = 2
 HEADER = 30.0  # bande de l'axe, en haut et en bas
-MAX_LABEL_WIDTH = 260.0
+MAX_LABEL_WIDTH = 1500.0
+DEFAULT_MAX_LABEL_LINES = 3
 MEASURE_PX = 100  # on mesure sur une grande police : le PDF n'applique pas le hinting
-_CANDIDATES = 36
+_CANDIDATES = 48
+MIN_DESIGN_WIDTH = 600.0
+MAX_DESIGN_WIDTH = 300000.0
+DEFAULT_MIN_FONT_PT = 8.0  # taille mini du texte sur la page
 POINTS_PER_MM = 72.0 / 25.4
 
 
@@ -92,6 +96,18 @@ class PosterPlan:
     family: str
 
     @property
+    def titles_full(self) -> int:
+        return self.layout.titles_full
+
+    @property
+    def titles_truncated(self) -> int:
+        return self.layout.titles_truncated
+
+    @property
+    def titles_hidden(self) -> int:
+        return self.layout.titles_hidden
+
+    @property
     def font_pt(self) -> float:
         """Taille réelle, sur la page, du texte des événements."""
         return FONT_PX * self.scale
@@ -125,13 +141,14 @@ def _build(
     metrics: _Metrics,
     px_per_year: float,
     time_range: tuple[float, float] | None = None,
+    max_label_lines: int = DEFAULT_MAX_LABEL_LINES,
 ) -> tuple[Layout, LayoutOptions]:
     opts = LayoutOptions(
         px_per_year=px_per_year,
         line_height=metrics.line_height,
         max_label_width=MAX_LABEL_WIDTH,
+        max_label_lines=max_label_lines,
         min_lane_height=NAME_MAX_LINES * metrics.line_height,
-        wrap=True,
     )
     layout = compute_layout(
         events,
@@ -164,40 +181,66 @@ class PosterPlanner:
         visible: set[str] | None = None,
         time_range: tuple[float, float] | None = None,
         family: str | None = None,
+        max_label_lines: int = DEFAULT_MAX_LABEL_LINES,
     ) -> None:
         self.family = family or QFont().family()
         self._metrics = _Metrics(self.family)
         selected = list(events)
         self._candidates: list[tuple[Layout, LayoutOptions]] = []
-        probe, _ = _build(selected, registry, visible, self._metrics, 1.0, time_range)
+        probe, _ = _build(
+            selected, registry, visible, self._metrics, 1.0, time_range, max_label_lines
+        )
         if not probe.lanes:
             return
         span = max(probe.t_end - probe.t_start, 1.0)
-        # largeurs de conception réparties géométriquement entre 600 et 80 000 unités
+        # largeurs de conception réparties géométriquement
         for i in range(_CANDIDATES):
-            design_width = 600.0 * (80000.0 / 600.0) ** (i / (_CANDIDATES - 1))
+            ratio = MAX_DESIGN_WIDTH / MIN_DESIGN_WIDTH
+            design_width = MIN_DESIGN_WIDTH * ratio ** (i / (_CANDIDATES - 1))
             self._candidates.append(
-                _build(selected, registry, visible, self._metrics, design_width / span, time_range)
+                _build(
+                    selected,
+                    registry,
+                    visible,
+                    self._metrics,
+                    design_width / span,
+                    time_range,
+                    max_label_lines,
+                )
             )
 
     @property
     def is_empty(self) -> bool:
         return not self._candidates
 
-    def plan(self, page_width_mm: float, page_height_mm: float, title: str = "") -> PosterPlan:
-        """Meilleure mise en page : celle qui donne le plus grand texte sur la page."""
+    def plan(
+        self,
+        page_width_mm: float,
+        page_height_mm: float,
+        title: str = "",
+        min_font_pt: float = DEFAULT_MIN_FONT_PT,
+    ) -> PosterPlan:
+        """Meilleure mise en page pour la page : le plus de titres, texte au moins ``min_font_pt``.
+
+        Plus la frise est large (en unités de conception), plus les titres ont de la place, mais
+        plus le texte rétrécit sur la page. On retient donc la frise la plus large dont le texte
+        reste lisible (``min_font_pt``) ; si même la plus étroite est trop petite, on garde celle
+        qui donne le plus grand texte.
+        """
         if self.is_empty:
             raise ValueError("aucun événement à exporter")
         title = title.strip()
         page_w = page_width_mm * POINTS_PER_MM
         page_h = page_height_mm * POINTS_PER_MM
-        best: tuple[float, Layout, LayoutOptions] | None = None
+        scored: list[tuple[float, Layout, LayoutOptions]] = []
         for layout, opts in self._candidates:
             cw, ch = _content_size(layout, title)
-            scale = min(page_w / cw, page_h / ch)
-            if best is None or scale > best[0]:
-                best = (scale, layout, opts)
-        assert best is not None
+            scored.append((min(page_w / cw, page_h / ch), layout, opts))
+        readable = [c for c in scored if c[0] * FONT_PX >= min_font_pt]
+        if readable:
+            best = max(readable, key=lambda c: (c[1].titles_full, c[1].titles_truncated, c[0]))
+        else:
+            best = max(scored, key=lambda c: c[0])
         scale, layout, opts = best
         cw, ch = _content_size(layout, title)
         names = tuple(tuple(_wrap_name(lane.name, self._metrics)) for lane in layout.lanes)
@@ -225,10 +268,14 @@ def plan_poster(
     title: str = "",
     time_range: tuple[float, float] | None = None,
     family: str | None = None,
+    min_font_pt: float = DEFAULT_MIN_FONT_PT,
+    max_label_lines: int = DEFAULT_MAX_LABEL_LINES,
 ) -> PosterPlan | None:
     """Raccourci : ``None`` s'il n'y a aucun événement à exporter."""
-    planner = PosterPlanner(events, registry, visible, time_range, family)
-    return None if planner.is_empty else planner.plan(page_width_mm, page_height_mm, title)
+    planner = PosterPlanner(events, registry, visible, time_range, family, max_label_lines)
+    if planner.is_empty:
+        return None
+    return planner.plan(page_width_mm, page_height_mm, title, min_font_pt)
 
 
 def _wrap_name(name: str, metrics: _Metrics) -> list[str]:
@@ -312,8 +359,7 @@ def paint_poster(painter: QPainter, plan: PosterPlan, theme: PrintTheme = PRINT_
             painter.setPen(theme.text)
             painter.setBrush(Qt.BrushStyle.NoBrush)
             top = y_lanes + item.y
-            block = len(item.label_lines) * _line_height(plan)
-            first = top + 3.0 if item.label_inside else top + (item.height - block) / 2
+            first = top + (item.height - len(item.label_lines) * _line_height(plan)) / 2
             for k, line in enumerate(item.label_lines):
                 painter.drawText(
                     QPointF(x_off + item.label_x, first + k * _line_height(plan) + plan.ascent),

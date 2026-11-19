@@ -25,6 +25,45 @@ ORDER_HINT_ES = (
     "El orden de abajo es el de las filas de la cronología. "
     "Los eventos de un color sin categoría siguen mostrándose."
 )
+LINES_FR = (
+    "Un titre trop long pour la place disponible passe sur plusieurs lignes "
+    "(jusqu'à ce nombre) : plus de titres s'affichent en entier, "
+    "mais les lignes de la frise deviennent plus hautes."
+)
+LINES_EN = (
+    "A title too long for the available space wraps onto several lines "
+    "(up to this number): more titles are shown in full, "
+    "but the timeline rows become taller."
+)
+LINES_ES = (
+    "Un título demasiado largo para el espacio disponible pasa a varias líneas "
+    "(hasta este número): se muestran más títulos completos, "
+    "pero las filas de la cronología son más altas."
+)
+STRETCH_FR = (
+    "La frise est étirée tant que le texte reste au moins de cette taille : "
+    "plus la page est grande, plus de titres s'affichent en entier."
+)
+STRETCH_EN = (
+    "The timeline is stretched as long as the text stays at least this size: "
+    "the larger the page, the more titles are shown in full."
+)
+STRETCH_ES = (
+    "La cronología se estira mientras el texto no sea menor que este tamaño: "
+    "cuanto mayor es la página, más títulos se muestran completos."
+)
+UNSEEN_FR = (
+    "%1 titres tronqués ou masqués : choisissez une page plus grande "
+    "ou réduisez la taille minimale du texte pour en afficher davantage."
+)
+UNSEEN_EN = (
+    "%1 titles truncated or hidden: choose a larger page "
+    "or reduce the minimum text size to show more of them."
+)
+UNSEEN_ES = (
+    "%1 títulos recortados u ocultos: elija una página mayor "
+    "o reduzca el tamaño mínimo del texto para mostrar más."
+)
 T: dict[str, tuple[str, str]] = {
     "Ajouter un événement": ("Add an event", "Añadir un evento"),
     "Modifier un événement": ("Edit an event", "Modificar un evento"),
@@ -231,6 +270,15 @@ T: dict[str, tuple[str, str]] = {
         "Este color ya lo usa «%1».",
     ),
     "Trop de catégories.": ("Too many categories.", "Demasiadas categorías."),
+    "%1 titres masqués (zoomez pour les voir)": (
+        "%1 titles hidden (zoom in to see them)",
+        "%1 títulos ocultos (acerque para verlos)",
+    ),
+    "Taille minimale du texte": ("Minimum text size", "Tamaño mínimo del texto"),
+    "Lignes maximum par titre": ("Maximum lines per title", "Líneas máximas por título"),
+    LINES_FR: (LINES_EN, LINES_ES),
+    STRETCH_FR: (STRETCH_EN, STRETCH_ES),
+    UNSEEN_FR: (UNSEEN_EN, UNSEEN_ES),
 }
 
 

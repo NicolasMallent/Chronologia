@@ -64,16 +64,38 @@ def test_le_contenu_tient_dans_la_page_et_remplit_une_dimension(events):
     assert fills == pytest.approx(1.0)
 
 
-def test_plus_grande_page_donne_un_texte_plus_grand(events):
+def test_plus_grande_page_affiche_plus_de_titres_a_texte_lisible(events):
     small = plan_poster(events, default_registry(), None, 594, 420)
     large = plan_poster(events, default_registry(), None, 2000, 1000)
-    assert large.font_pt > small.font_pt
+    assert large.titles_full > small.titles_full
+    assert small.font_pt >= 8 - 1e-6 and large.font_pt >= 8 - 1e-6
 
 
-def test_titres_complets_dans_l_export(events):
-    plan = plan_poster(events, default_registry(), None, 1189, 841)
-    for item in (i for lane in plan.layout.lanes for i in lane.items):
-        assert " ".join(item.label_lines).replace(" …", "") == " ".join(item.event.title.split())
+def test_plus_de_titres_complets_sur_une_page_plus_grande(events):
+    petit = plan_poster(events, default_registry(), None, 1189, 841, min_font_pt=8)
+    grand = plan_poster(events, default_registry(), None, 5000, 800, min_font_pt=8)
+    assert grand.titles_full > petit.titles_full
+    assert grand.font_pt >= 8 - 1e-6  # le texte reste lisible
+    total = len(events)
+    for plan in (petit, grand):
+        assert plan.titles_full + plan.titles_truncated + plan.titles_hidden == total
+        for item in plan.layout.items():
+            assert bool(item.label_lines) == (item.label_state != "hidden")
+            if item.label_state == "full":
+                assert " ".join(item.label_lines) == " ".join(item.event.title.split())
+
+
+def test_taille_minimale_du_texte_pilote_la_largeur(events):
+    lisible = plan_poster(events, default_registry(), None, 5000, 800, min_font_pt=10)
+    dense = plan_poster(events, default_registry(), None, 5000, 800, min_font_pt=4)
+    assert dense.titles_full >= lisible.titles_full
+    assert dense.font_pt < lisible.font_pt
+
+
+def test_aucun_titre_perdu_si_la_page_est_trop_petite_pour_le_texte_mini(events):
+    plan = plan_poster(events, default_registry(), None, 210, 297, min_font_pt=48)
+    assert plan is not None  # repli : le plus grand texte possible
+    assert plan.event_count == len(events)
 
 
 def test_filtre_categories_et_periode(events):
@@ -100,7 +122,7 @@ def test_planner_instantane_pour_un_autre_format(events):
     planner = PosterPlanner(events, default_registry())
     a = planner.plan(1189, 841)
     b = planner.plan(594, 420)
-    assert a.layout is not None and b.scale < a.scale
+    assert a.layout is not None and b.titles_full <= a.titles_full
 
 
 def test_apercu_est_une_image_de_la_bonne_proportion(events):
@@ -162,3 +184,12 @@ def test_echec_d_ecriture_ne_plante_pas(app, tmp_path, monkeypatch):
     w.export_pdf()
     assert errors and not (tmp_path / "absent").exists()
     w.close()
+
+
+def test_titres_sur_plusieurs_lignes_en_affichent_plus(events):
+    reg = default_registry()
+    une = plan_poster(events, reg, None, 5000, 800, min_font_pt=8, max_label_lines=1)
+    trois = plan_poster(events, reg, None, 5000, 800, min_font_pt=8, max_label_lines=3)
+    assert trois.titles_full > une.titles_full
+    assert trois.font_pt >= 8 - 1e-6
+    assert max(len(i.label_lines) for i in trois.layout.items()) > 1

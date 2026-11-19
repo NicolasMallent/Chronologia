@@ -108,107 +108,112 @@
 <context>
     <name>EventDialog</name>
     <message>
-        <location filename="../event_dialog.py" line="45"/>
+        <location filename="../event_dialog.py" line="46"/>
         <source>Modifier l&apos;événement</source>
         <translation>Modificar el evento</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="45"/>
+        <location filename="../event_dialog.py" line="46"/>
         <source>Nouvel événement</source>
         <translation>Nuevo evento</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="52"/>
+        <location filename="../event_dialog.py" line="53"/>
         <source>aaaa, aaaamm, aaaammjj ou jj/mm/aaaa</source>
         <translation>aaaa, aaaamm, aaaammdd o dd/mm/aaaa</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="54"/>
+        <location filename="../event_dialog.py" line="55"/>
         <source>vide = événement ponctuel</source>
         <translation>vacío = evento puntual</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="56"/>
+        <location filename="../event_dialog.py" line="57"/>
         <source>Commentaire ou source (affiché au survol)</source>
         <translation>Comentario o fuente (se muestra al pasar el ratón)</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="60"/>
+        <location filename="../event_dialog.py" line="61"/>
         <source>Couleur personnalisée</source>
         <translation>Color personalizado</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="64"/>
+        <location filename="../event_dialog.py" line="65"/>
         <source>red ou #FF0000</source>
         <translation>red o #FF0000</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="67"/>
+        <location filename="../event_dialog.py" line="68"/>
         <source>Choisir…</source>
         <translation>Elegir…</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="79"/>
+        <location filename="../event_dialog.py" line="80"/>
         <source>Titre</source>
         <translation>Título</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="80"/>
+        <location filename="../event_dialog.py" line="81"/>
         <source>Début</source>
         <translation>Inicio</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="81"/>
+        <location filename="../event_dialog.py" line="82"/>
         <source>Fin</source>
         <translation>Fin</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="82"/>
+        <location filename="../event_dialog.py" line="83"/>
         <source>Catégorie</source>
         <translation>Categoría</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="83"/>
+        <location filename="../event_dialog.py" line="84"/>
         <source>Couleur</source>
         <translation>Color</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="84"/>
+        <location filename="../event_dialog.py" line="85"/>
         <source>Source</source>
         <translation>Fuente</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="144"/>
+        <location filename="../event_dialog.py" line="94"/>
+        <source>Supprimer</source>
+        <translation>Eliminar</translation>
+    </message>
+    <message>
+        <location filename="../event_dialog.py" line="151"/>
         <source>Le titre est obligatoire.</source>
         <translation>El título es obligatorio.</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="145"/>
+        <location filename="../event_dialog.py" line="152"/>
         <source>Le titre est trop long.</source>
         <translation>El título es demasiado largo.</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="147"/>
+        <location filename="../event_dialog.py" line="154"/>
         <source>Date de début invalide (aaaa, aaaamm, aaaammjj, mm/aaaa ou jj/mm/aaaa).</source>
         <translation>Fecha de inicio no válida (aaaa, aaaamm, aaaammdd, mm/aaaa o dd/mm/aaaa).</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="149"/>
+        <location filename="../event_dialog.py" line="156"/>
         <source>Date de fin invalide.</source>
         <translation>Fecha de fin no válida.</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="150"/>
+        <location filename="../event_dialog.py" line="157"/>
         <source>La fin ne peut pas précéder le début.</source>
         <translation>El fin no puede ser anterior al inicio.</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="152"/>
+        <location filename="../event_dialog.py" line="159"/>
         <source>Couleur inconnue (nom comme « red » ou code #FF0000).</source>
         <translation>Color desconocido (un nombre como «red» o un código como #FF0000).</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="154"/>
+        <location filename="../event_dialog.py" line="161"/>
         <source>La source est trop longue.</source>
         <translation>La fuente es demasiado larga.</translation>
     </message>
@@ -216,82 +221,107 @@
 <context>
     <name>ExportDialog</name>
     <message>
-        <location filename="../export_dialog.py" line="45"/>
+        <location filename="../export_dialog.py" line="51"/>
         <source>Exporter en PDF</source>
         <translation>Exportar a PDF</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="63"/>
+        <location filename="../export_dialog.py" line="69"/>
         <source>Personnalisé</source>
         <translation>Personalizado</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="66"/>
+        <location filename="../export_dialog.py" line="72"/>
         <source>Paysage</source>
         <translation>Horizontal</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="67"/>
+        <location filename="../export_dialog.py" line="73"/>
         <source>Portrait</source>
         <translation>Vertical</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="75"/>
+        <location filename="../export_dialog.py" line="81"/>
         <source>Titre affiché en haut de la frise (facultatif)</source>
         <translation>Título mostrado en la parte superior de la cronología (opcional)</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="77"/>
+        <location filename="../export_dialog.py" line="83"/>
         <source>Limiter à la période</source>
         <translation>Limitar al período</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="100"/>
+        <location filename="../export_dialog.py" line="104"/>
+        <source>La frise est étirée tant que le texte reste au moins de cette taille : plus la page est grande, plus de titres s&apos;affichent en entier.</source>
+        <translation>La cronología se estira mientras el texto no sea menor que este tamaño: cuanto mayor es la página, más títulos se muestran completos.</translation>
+    </message>
+    <message>
+        <location filename="../export_dialog.py" line="114"/>
+        <source>Un titre trop long pour la place disponible passe sur plusieurs lignes (jusqu&apos;à ce nombre) : plus de titres s&apos;affichent en entier, mais les lignes de la frise deviennent plus hautes.</source>
+        <translation>Un título demasiado largo para el espacio disponible pasa a varias líneas (hasta este número): se muestran más títulos completos, pero las filas de la cronología son más altas.</translation>
+    </message>
+    <message>
+        <location filename="../export_dialog.py" line="130"/>
         <source>Format</source>
         <translation>Formato</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="101"/>
+        <location filename="../export_dialog.py" line="131"/>
         <source>Orientation</source>
         <translation>Orientación</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="102"/>
+        <location filename="../export_dialog.py" line="132"/>
         <source>Dimensions</source>
         <translation>Dimensiones</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="103"/>
+        <location filename="../export_dialog.py" line="133"/>
         <source>Titre</source>
         <translation>Título</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="104"/>
+        <location filename="../export_dialog.py" line="134"/>
         <source>Période</source>
         <translation>Período</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="109"/>
+        <location filename="../export_dialog.py" line="135"/>
+        <source>Taille minimale du texte</source>
+        <translation>Tamaño mínimo del texto</translation>
+    </message>
+    <message>
+        <location filename="../export_dialog.py" line="136"/>
+        <source>Lignes maximum par titre</source>
+        <translation>Líneas máximas por título</translation>
+    </message>
+    <message>
+        <location filename="../export_dialog.py" line="141"/>
         <source>Exporter…</source>
         <translation>Exportar…</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="204"/>
+        <location filename="../export_dialog.py" line="242"/>
         <source>Aucun événement à exporter avec les filtres actuels.</source>
         <translation>No hay eventos que exportar con los filtros actuales.</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="213"/>
+        <location filename="../export_dialog.py" line="253"/>
         <source>%1 événements, %2 catégories. Taille du texte sur la page : %3 pt.</source>
         <translation>%1 eventos, %2 categorías. Tamaño del texto en la página: %3 pt.</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="222"/>
+        <location filename="../export_dialog.py" line="263"/>
+        <source>%1 titres tronqués ou masqués : choisissez une page plus grande ou réduisez la taille minimale du texte pour en afficher davantage.</source>
+        <translation>%1 títulos recortados u ocultos: elija una página mayor o reduzca el tamaño mínimo del texto para mostrar más.</translation>
+    </message>
+    <message>
+        <location filename="../export_dialog.py" line="270"/>
         <source>Texte très petit : choisissez un format plus grand ou une période plus courte.</source>
         <translation>Texto muy pequeño: elija un formato mayor o un período más corto.</translation>
     </message>
     <message>
-        <location filename="../export_dialog.py" line="228"/>
+        <location filename="../export_dialog.py" line="276"/>
         <source>Au-delà de 5 m, certains lecteurs PDF refusent la page. Le PDF est vectoriel : exportez à la moitié ou au dixième de la taille, puis agrandissez à l&apos;impression.</source>
         <translation>Por encima de 5 m, algunos lectores de PDF rechazan la página. El PDF es vectorial: exporte a la mitad o a la décima parte del tamaño y amplíe al imprimir.</translation>
     </message>
@@ -313,7 +343,7 @@
     <name>MainWindow</name>
     <message>
         <location filename="../main_window.py" line="51"/>
-        <location filename="../main_window.py" line="223"/>
+        <location filename="../main_window.py" line="226"/>
         <source>Catégories</source>
         <translation>Categorías</translation>
     </message>
@@ -425,112 +455,117 @@
         <translation>El nuevo idioma se aplicará la próxima vez que se inicie Chronologia.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="202"/>
+        <location filename="../main_window.py" line="205"/>
         <source>Supprimer l&apos;événement</source>
         <translation>Eliminar el evento</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="203"/>
+        <location filename="../main_window.py" line="206"/>
         <source>Supprimer « %1 » ? (Annulable avec Ctrl+Z)</source>
         <translation>¿Eliminar «%1»? (Se puede deshacer con Ctrl+Z)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="225"/>
+        <location filename="../main_window.py" line="228"/>
         <source>Catégories appliquées mais non enregistrées : %1</source>
         <translation>Categorías aplicadas pero no guardadas: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="260"/>
+        <location filename="../main_window.py" line="264"/>
         <source>Ouvrir un CSV</source>
         <translation>Abrir un CSV</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="262"/>
+        <location filename="../main_window.py" line="266"/>
         <source>Fichiers CSV (*.csv);;Tous les fichiers (*)</source>
         <translation>Archivos CSV (*.csv);;Todos los archivos (*)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="272"/>
+        <location filename="../main_window.py" line="276"/>
         <source>Import impossible</source>
         <translation>No se puede importar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="295"/>
+        <location filename="../main_window.py" line="299"/>
         <source>Enregistrer sous</source>
         <translation>Guardar como</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="295"/>
+        <location filename="../main_window.py" line="299"/>
         <source>Fichiers CSV (*.csv)</source>
         <translation>Archivos CSV (*.csv)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="307"/>
+        <location filename="../main_window.py" line="311"/>
         <source>Enregistrement impossible</source>
         <translation>No se puede guardar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="313"/>
+        <location filename="../main_window.py" line="317"/>
         <source>Enregistré : %1</source>
         <translation>Guardado: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="325"/>
+        <location filename="../main_window.py" line="329"/>
         <source>Exporter en PDF</source>
         <translation>Exportar a PDF</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="325"/>
+        <location filename="../main_window.py" line="329"/>
         <source>Fichiers PDF (*.pdf)</source>
         <translation>Archivos PDF (*.pdf)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="334"/>
+        <location filename="../main_window.py" line="338"/>
         <source>Export impossible</source>
         <translation>No se puede exportar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="337"/>
+        <location filename="../main_window.py" line="341"/>
         <source>PDF exporté : %1</source>
         <translation>PDF exportado: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="346"/>
+        <location filename="../main_window.py" line="350"/>
         <source>Modifications non enregistrées</source>
         <translation>Cambios sin guardar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="347"/>
+        <location filename="../main_window.py" line="351"/>
         <source>Enregistrer les modifications avant de continuer ?</source>
         <translation>¿Guardar los cambios antes de continuar?</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="365"/>
+        <location filename="../main_window.py" line="369"/>
         <source>Sans titre</source>
         <translation>Sin título</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="386"/>
+        <location filename="../main_window.py" line="390"/>
         <source>Import terminé avec des anomalies</source>
         <translation>Importación terminada con incidencias</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="388"/>
+        <location filename="../main_window.py" line="392"/>
         <source>%1 événements importés, %2 lignes ignorées, %3 corrigées.</source>
         <translation>%1 eventos importados, %2 filas omitidas, %3 corregidas.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="393"/>
+        <location filename="../main_window.py" line="397"/>
         <source>ligne</source>
         <translation>fila</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="402"/>
+        <location filename="../main_window.py" line="406"/>
         <source>%1 événements affichés / %2</source>
         <translation>%1 eventos mostrados / %2</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="406"/>
+        <location filename="../main_window.py" line="410"/>
+        <source>%1 titres masqués (zoomez pour les voir)</source>
+        <translation>%1 títulos ocultos (acerque para verlos)</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="415"/>
         <source>%1 correspondances</source>
         <translation>%1 coincidencias</translation>
     </message>
@@ -626,22 +661,22 @@
 <context>
     <name>TimelineView</name>
     <message>
-        <location filename="../timeline_view.py" line="185"/>
+        <location filename="../timeline_view.py" line="240"/>
         <source>Modifier…</source>
         <translation>Modificar…</translation>
     </message>
     <message>
-        <location filename="../timeline_view.py" line="188"/>
+        <location filename="../timeline_view.py" line="243"/>
         <source>Supprimer</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location filename="../timeline_view.py" line="194"/>
+        <location filename="../timeline_view.py" line="249"/>
         <source>Nouvel événement ici…</source>
         <translation>Nuevo evento aquí…</translation>
     </message>
     <message>
-        <location filename="../timeline_view.py" line="303"/>
+        <location filename="../timeline_view.py" line="358"/>
         <source>Ouvrez un fichier CSV (Ctrl+O)</source>
         <translation>Abra un archivo CSV (Ctrl+O)</translation>
     </message>

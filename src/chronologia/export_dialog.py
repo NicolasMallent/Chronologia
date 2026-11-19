@@ -25,7 +25,13 @@ from .categories import CategoryRegistry
 from .layout import end_position, start_position
 from .model import Event
 from .pdf_export import PAGE_SIZES_MM, PDF_COMFORT_LIMIT_MM
-from .poster import PosterPlan, PosterPlanner, render_preview
+from .poster import (
+    DEFAULT_MAX_LABEL_LINES,
+    DEFAULT_MIN_FONT_PT,
+    PosterPlan,
+    PosterPlanner,
+    render_preview,
+)
 
 MIN_READABLE_PT = 6.0
 MIN_SIDE_CM, MAX_SIDE_CM = 10.0, 1000.0
@@ -87,6 +93,30 @@ class ExportDialog(QDialog):
             period_row.addWidget(widget)
         period_row.addStretch()
 
+        self.min_font = QDoubleSpinBox()
+        self.min_font.setRange(3.0, 48.0)
+        self.min_font.setDecimals(1)
+        self.min_font.setSingleStep(0.5)
+        self.min_font.setSuffix(" pt")
+        self.min_font.setValue(DEFAULT_MIN_FONT_PT)
+        self.min_font.setToolTip(
+            self.tr(
+                "La frise est étirée tant que le texte reste au moins de cette taille : "
+                "plus la page est grande, plus de titres s'affichent en entier."
+            )
+        )
+
+        self.max_lines = QSpinBox()
+        self.max_lines.setRange(1, 6)
+        self.max_lines.setValue(DEFAULT_MAX_LABEL_LINES)
+        self.max_lines.setToolTip(
+            self.tr(
+                "Un titre trop long pour la place disponible passe sur plusieurs lignes "
+                "(jusqu'à ce nombre) : plus de titres s'affichent en entier, "
+                "mais les lignes de la frise deviennent plus hautes."
+            )
+        )
+
         self._info = QLabel()
         self._info.setWordWrap(True)
         self._warning = QLabel()
@@ -102,6 +132,8 @@ class ExportDialog(QDialog):
         form.addRow(self.tr("Dimensions"), size_row)
         form.addRow(self.tr("Titre"), self.title)
         form.addRow(self.tr("Période"), period_row)
+        form.addRow(self.tr("Taille minimale du texte"), self.min_font)
+        form.addRow(self.tr("Lignes maximum par titre"), self.max_lines)
 
         self._buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
@@ -127,7 +159,9 @@ class ExportDialog(QDialog):
         self.width_cm.valueChanged.connect(self._size_edited)
         self.height_cm.valueChanged.connect(self._size_edited)
         self.title.textChanged.connect(self._refresh_timer.start)
+        self.min_font.valueChanged.connect(self._refresh_timer.start)
         self.limit_period.toggled.connect(self._period_toggled)
+        self.max_lines.valueChanged.connect(self._rebuild_timer.start)
         self.year_from.valueChanged.connect(self._rebuild_timer.start)
         self.year_to.valueChanged.connect(self._rebuild_timer.start)
 
@@ -190,7 +224,11 @@ class ExportDialog(QDialog):
 
     def _rebuild(self) -> None:
         self._planner = PosterPlanner(
-            self._events, self._registry, self._visible, self._time_range()
+            self._events,
+            self._registry,
+            self._visible,
+            self._time_range(),
+            max_label_lines=self.max_lines.value(),
         )
         self.refresh()
 
@@ -207,7 +245,9 @@ class ExportDialog(QDialog):
             ok_button.setEnabled(False)
             return
         width_mm, height_mm = self.width_cm.value() * 10, self.height_cm.value() * 10
-        self._plan = self._planner.plan(width_mm, height_mm, self.title.text())
+        self._plan = self._planner.plan(
+            width_mm, height_mm, self.title.text(), self.min_font.value()
+        )
         plan = self._plan
         self._info.setText(
             self.tr("%1 événements, %2 catégories. Taille du texte sur la page : %3 pt.")
@@ -216,6 +256,14 @@ class ExportDialog(QDialog):
             .replace("%3", f"{plan.font_pt:.1f}")
         )
         warnings = []
+        unseen = plan.titles_truncated + plan.titles_hidden
+        if unseen:
+            warnings.append(
+                self.tr(
+                    "%1 titres tronqués ou masqués : choisissez une page plus grande "
+                    "ou réduisez la taille minimale du texte pour en afficher davantage."
+                ).replace("%1", str(unseen))
+            )
         if plan.font_pt < MIN_READABLE_PT:
             warnings.append(
                 self.tr(
