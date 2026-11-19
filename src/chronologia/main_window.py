@@ -405,6 +405,11 @@ class MainWindow(QMainWindow):
         total = len(self.document.events)
         text = self.tr("%1 événements affichés / %2").replace("%1", str(self.view.displayed_count))
         text = text.replace("%2", str(total))
+        hidden = self.view.hidden_titles
+        if hidden:
+            text += " — " + self.tr("%1 titres masqués (zoomez pour les voir)").replace(
+                "%1", str(hidden)
+            )
         matches = self.view.match_count
         if matches is not None:
             text += " — " + self.tr("%1 correspondances").replace("%1", str(matches))

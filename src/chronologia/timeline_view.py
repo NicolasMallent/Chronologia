@@ -158,6 +158,11 @@ class TimelineView(QGraphicsView):
         return sum(len(lane.items) for lane in self._layout.lanes) if self._layout else 0
 
     @property
+    def hidden_titles(self) -> int:
+        """Nombre de titres cachés faute de place à l'échelle actuelle."""
+        return self._layout.titles_hidden if self._layout is not None else 0
+
+    @property
     def match_count(self) -> int | None:
         """Nombre d'événements correspondant à la recherche (``None`` sans recherche)."""
         return self._matches if self._query else None
@@ -253,7 +258,7 @@ class TimelineView(QGraphicsView):
         self._groups = {}
         self._halo = None
         measure, line_height = make_measurer(self._font)
-        opts = LayoutOptions(px_per_year=self._ppy, line_height=line_height, wrap=False)
+        opts = LayoutOptions(px_per_year=self._ppy, line_height=line_height)
         self._layout = compute_layout(
             self._events, self._registry, measure, opts, visible_categories=self._visible
         )
@@ -300,9 +305,7 @@ class TimelineView(QGraphicsView):
         shape.setPen(pen)
         group.addToGroup(shape)
 
-        n = len(item.label_lines)
-        block = n * opts.line_height
-        first_y = top + opts.padding if item.label_inside else top + (item.height - block) / 2
+        first_y = top + (item.height - len(item.label_lines) * opts.line_height) / 2
         for i, line in enumerate(item.label_lines):
             text = QGraphicsSimpleTextItem(line)
             text.setFont(self._font)

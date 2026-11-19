@@ -6,12 +6,14 @@ l'export dessinent à l'identique.
 
 Principe :
 - une ligne (« lane ») par catégorie visible, dans l'ordre du registre ;
-- dans une ligne, les éléments sont rangés en sous-lignes : un élément va dans la première
-  sous-ligne où il ne chevauche rien, titre compris ;
-- titre d'une période : dans la barre s'il y tient, sinon à droite de la barre ;
-  titre d'un événement ponctuel : à droite du losange ;
-- ``wrap=True`` (export) : retour à la ligne automatique, titre toujours complet ;
-  ``wrap=False`` (écran) : une ligne, tronquée avec « … » (le titre complet est en info-bulle).
+- dans une ligne, les éléments sont rangés en sous-lignes **d'après le temps** : deux éléments
+  qui ont lieu en même temps (périodes qui se recouvrent, même date, événement dans une période)
+  vont sur des sous-lignes différentes ; des éléments qui se suivent partagent la même sous-ligne.
+  Le nombre de sous-lignes ne dépend donc ni du zoom ni des titres ;
+- le titre n'est affiché que s'il a la place : dans la barre d'une période, ou à droite de
+  l'élément jusqu'à l'élément suivant de la même sous-ligne. S'il n'a qu'une place partielle il
+  est tronqué avec « … », et caché si la place est vraiment trop petite (le titre complet reste
+  disponible en info-bulle). Plus on zoome, plus les titres se dévoilent.
 """
 
 from __future__ import annotations
@@ -38,19 +40,30 @@ class LayoutOptions:
     line_height: float = 14.0
     marker_size: float = 12.0  # losange des événements ponctuels, hauteur minimale d'une barre
     padding: float = 3.0
-    gap: float = 6.0  # espace horizontal minimal entre deux éléments d'une même sous-ligne
-    max_label_width: float = 220.0  # largeur max d'un titre placé à côté d'un élément
-    max_inside_lines: int = 3  # au-delà, le titre d'une période passe à droite de la barre
-    min_inside_width: float = 40.0  # écran : largeur mini d'une barre pour y écrire le titre
+    gap: float = 6.0  # espace minimal entre la fin d'un titre et l'élément suivant
+    max_label_width: float = 1000.0  # largeur max d'un titre placé à côté d'un élément
+    min_label_width: float = 30.0  # en dessous, le titre est caché plutôt que réduit à « … »
+    max_label_lines: int = 1  # > 1 : un titre trop long passe sur plusieurs lignes (export)
     sublane_spacing: float = 4.0
     lane_spacing: float = 14.0
     min_lane_height: float = 0.0  # ex. : place pour le nom de la catégorie
     min_tick_px: float = 70.0
-    wrap: bool = True
 
     def __post_init__(self) -> None:
         if self.px_per_year <= 0 or self.line_height <= 0 or self.max_label_width <= 0:
             raise ValueError("échelle, hauteur de ligne et largeur de titre doivent être > 0")
+        if self.max_label_lines < 1:
+            raise ValueError("un titre doit pouvoir tenir sur au moins une ligne")
+
+    @property
+    def row_height(self) -> float:
+        """Hauteur de toutes les barres et de toutes les sous-lignes."""
+        return max(self.marker_size, self.line_height + 2 * self.padding)
+
+
+LABEL_FULL = "full"
+LABEL_TRUNCATED = "truncated"
+LABEL_HIDDEN = "hidden"
 
 
 @dataclass(frozen=True)
@@ -58,14 +71,15 @@ class LayoutItem:
     event: Event
     x0: float  # début de la barre ; pour un événement ponctuel, centre du losange
     x1: float  # fin de la barre ; égal à x0 pour un événement ponctuel
-    left: float  # emprise horizontale (marqueur + titre), utilisée contre les chevauchements
+    left: float  # emprise horizontale (forme + titre affiché)
     right: float
-    y: float  # haut de l'élément, relatif au haut de la mise en page
-    height: float
+    y: float  # haut de la forme, relatif au haut de la mise en page
+    height: float  # hauteur de la forme (barre ou losange) ; le titre est centré dessus
     sublane: int
-    label_lines: tuple[str, ...]
+    label_lines: tuple[str, ...]  # vide si le titre est caché
     label_inside: bool
     label_x: float  # début du texte
+    label_state: str = LABEL_HIDDEN
 
     @property
     def is_point(self) -> bool:
@@ -96,6 +110,9 @@ class Layout:
     height: float
     t_start: float  # début de l'axe, en années fractionnaires
     t_end: float
+    titles_full: int = 0  # titres affichés en entier
+    titles_truncated: int = 0  # titres affichés avec « … »
+    titles_hidden: int = 0  # titres cachés faute de place
 
     @property
     def width(self) -> float:
@@ -191,80 +208,136 @@ def make_ticks(t_start: float, t_end: float, opts: LayoutOptions) -> tuple[Tick,
 
 # --- mise en page ------------------------------------------------------------------------
 
+_POINT_SPAN = 1e-7  # durée (en années, ~3 s) d'un événement ponctuel pour détecter la simultanéité
+
+
+def _span(event: Event) -> tuple[float, float]:
+    start = start_position(event.start)
+    if event.is_point:
+        return start, start + _POINT_SPAN
+    return start, max(end_position(event.end), start + _POINT_SPAN)
+
+
+def assign_sublanes(events: list[Event]) -> list[int]:
+    """Numéro de sous-ligne de chaque événement : simultanés = lignes différentes.
+
+    Algorithme glouton par début croissant (la période la plus longue d'abord) : un événement
+    prend la première sous-ligne dont le dernier élément est terminé. Le résultat ne dépend que
+    des dates.
+    """
+    spans = [_span(e) for e in events]
+    order = sorted(range(len(events)), key=lambda i: (spans[i][0], spans[i][0] - spans[i][1], i))
+    ends: list[float] = []
+    result = [0] * len(events)
+    for i in order:
+        start, end = spans[i]
+        for k, busy_until in enumerate(ends):
+            if start >= busy_until:
+                result[i], ends[k] = k, end
+                break
+        else:
+            result[i] = len(ends)
+            ends.append(end)
+    return result
+
 
 @dataclass
 class _Draft:
-    """Élément en cours de placement (la sous-ligne et le y sont encore inconnus)."""
+    """Élément en cours de placement."""
 
     event: Event
     x0: float
     x1: float
-    left: float
-    right: float
-    height: float
-    lines: tuple[str, ...]
-    inside: bool
-    label_x: float
-    sublane: int = 0
+    sublane: int
+    height: float  # hauteur de la forme
+    lines: tuple[str, ...] = ()
+    inside: bool = False
+    label_x: float = 0.0
+    state: str = LABEL_HIDDEN
+    right: float = 0.0  # fin de la forme, puis du titre affiché
+    block: float = 0.0  # hauteur du bloc de titre
+
+    @property
+    def is_point(self) -> bool:
+        return self.event.is_point
 
 
-def _build_draft(
-    event: Event,
-    t0: float,
+def _shape_left(draft: _Draft, half: float) -> float:
+    return draft.x0 - half if draft.is_point else draft.x0
+
+
+def _fit_lines(title: str, width: float, max_lines: int, measure: TextMeasurer) -> list[str] | None:
+    """Titre complet sur au plus ``max_lines`` lignes, sans mot coupé ; ``None`` sinon."""
+    if width <= 0 or any(measure(word) > width for word in title.split()):
+        return None
+    lines = wrap_text(title, width, measure)
+    return lines if len(lines) <= max_lines else None
+
+
+def _truncated_lines(title: str, width: float, max_lines: int, measure: TextMeasurer) -> list[str]:
+    """Titre sur au plus ``max_lines`` lignes, la dernière tronquée avec « … »."""
+    if max_lines > 1 and all(measure(word) <= width for word in title.split()):
+        lines = wrap_text(title, width, measure)
+        if len(lines) > max_lines:
+            tail = " ".join(lines[max_lines - 1 :])
+            return [*lines[: max_lines - 1], elide(tail, width, measure)]
+        return lines
+    return [elide(title, width, measure)]
+
+
+def _place_label(
+    draft: _Draft,
+    limit: float | None,
     opts: LayoutOptions,
     measure: TextMeasurer,
-    x_limit: float | None = None,
-) -> _Draft:
+) -> None:
+    """Choisit où et comment afficher le titre. ``limit`` : x à ne pas dépasser (élément suivant).
+
+    Ordre de préférence : titre complet sur une ligne (dans la barre, sinon à côté), puis complet
+    sur plusieurs lignes si permis (le moins de lignes possible, dans la barre en cas d'égalité),
+    puis tronqué avec « … » dans l'emplacement le plus large, enfin caché.
+    """
     half = opts.marker_size / 2
     pad = opts.padding
-    x0 = (start_position(event.start) - t0) * opts.px_per_year
-    if event.is_point:
-        x1, left, bar_right = x0, x0 - half, x0 + half
+    lh = opts.line_height
+    title = draft.event.title
+    full = measure(title)
+    shape_right = draft.x0 + half if draft.is_point else draft.x1
+    outside_x = shape_right + pad
+    outside = opts.max_label_width
+    if limit is not None:
+        outside = min(outside, limit - opts.gap - outside_x)
+    inside = (draft.x1 - draft.x0) - 2 * pad if not draft.is_point else -1.0
+
+    lines: list[str] | None = None
+    where = False
+    if full <= inside:
+        lines, where = [title], True
+    elif full <= outside:
+        lines, where = [title], False
+    elif opts.max_label_lines > 1:
+        in_fit = _fit_lines(title, inside, opts.max_label_lines, measure)
+        out_fit = _fit_lines(title, outside, opts.max_label_lines, measure)
+        if in_fit and (not out_fit or len(in_fit) <= len(out_fit)):
+            lines, where = in_fit, True
+        elif out_fit:
+            lines, where = out_fit, False
+    if lines is None:
+        where = inside >= outside
+        width = inside if where else outside
+        if width < opts.min_label_width:
+            return  # pas de place : titre caché
+        lines = _truncated_lines(title, width, opts.max_label_lines, measure)
+
+    draft.inside = where
+    draft.lines = tuple(lines)
+    draft.state = LABEL_FULL if " ".join(lines) == " ".join(title.split()) else LABEL_TRUNCATED
+    draft.block = len(lines) * lh
+    draft.label_x = draft.x0 + pad if where else outside_x
+    if where:
+        draft.height = max(draft.height, draft.block + 2 * pad)  # barre plus haute si besoin
     else:
-        x1 = (end_position(event.end) - t0) * opts.px_per_year
-        if x_limit is not None:  # période demandée : les barres qui dépassent sont rognées
-            x0, x1 = max(x0, 0.0), min(x1, x_limit)
-        x1 = max(x1, x0 + opts.marker_size)
-        left, bar_right = x0, x1
-
-    inside_width = (x1 - x0) - 2 * pad
-    if not event.is_point and inside_width >= opts.min_inside_width:
-        if opts.wrap:
-            lines = wrap_text(event.title, inside_width, measure)
-            # pas de mot coupé dans une barre : sinon le titre passe à droite
-            fits = len(lines) <= opts.max_inside_lines and all(
-                measure(word) <= inside_width for word in event.title.split()
-            )
-        else:
-            lines = [elide(event.title, inside_width, measure)]
-            fits = True
-        if fits:
-            height = max(opts.marker_size, len(lines) * opts.line_height + 2 * pad)
-            return _Draft(event, x0, x1, left, bar_right, height, tuple(lines), True, x0 + pad)
-
-    # titre à droite de l'élément
-    if opts.wrap:
-        lines = wrap_text(event.title, opts.max_label_width, measure)
-    else:
-        lines = [elide(event.title, opts.max_label_width, measure)]
-    label_x = bar_right + pad
-    label_w = max(measure(line) for line in lines)
-    height = max(opts.marker_size, len(lines) * opts.line_height)
-    return _Draft(event, x0, x1, left, label_x + label_w, height, tuple(lines), False, label_x)
-
-
-def _pack(drafts: list[_Draft], gap: float) -> int:
-    """Répartit les éléments en sous-lignes sans chevauchement. Renvoie leur nombre."""
-    ends: list[float] = []  # bord droit de chaque sous-ligne
-    for draft in sorted(drafts, key=lambda d: (d.left, -(d.right - d.left))):
-        for i, end in enumerate(ends):
-            if draft.left >= end + gap:
-                draft.sublane, ends[i] = i, draft.right
-                break
-        else:
-            draft.sublane = len(ends)
-            ends.append(draft.right)
-    return len(ends)
+        draft.right = max(draft.right, outside_x + max(measure(line) for line in lines))
 
 
 def compute_layout(
@@ -310,16 +383,40 @@ def compute_layout(
         by_lane.setdefault(name, (color_hex, []))[1].append(event)
     lane_names = sorted(by_lane, key=lambda n: (order.get(n, len(order)),))  # tri stable
 
+    half = opts.marker_size / 2
+    row_h = opts.row_height
+    x_limit = (t1 - t0) * opts.px_per_year if time_range else None
+    counts = {LABEL_FULL: 0, LABEL_TRUNCATED: 0, LABEL_HIDDEN: 0}
     lanes: list[LayoutLane] = []
     y = 0.0
     for name in lane_names:
         color_hex, lane_events = by_lane[name]
-        x_limit = (t1 - t0) * opts.px_per_year if time_range else None
-        drafts = [_build_draft(e, t0, opts, measure, x_limit) for e in lane_events]
-        n_sub = _pack(drafts, opts.gap)
-        heights = [0.0] * n_sub
+        sublanes = assign_sublanes(lane_events)
+        drafts: list[_Draft] = []
+        for event, sub in zip(lane_events, sublanes, strict=True):
+            x0 = (start_position(event.start) - t0) * opts.px_per_year
+            if event.is_point:
+                x1 = x0
+                right = x0 + half
+            else:
+                x1 = (end_position(event.end) - t0) * opts.px_per_year
+                if x_limit is not None:  # période demandée : les barres qui dépassent sont rognées
+                    x0, x1 = max(x0, 0.0), min(x1, x_limit)
+                x1 = max(x1, x0 + opts.marker_size)
+                right = x1
+            drafts.append(_Draft(event, x0, x1, sub, row_h, right=right))
+
+        n_sub = max(sublanes) + 1
+        for k in range(n_sub):
+            row = sorted((d for d in drafts if d.sublane == k), key=lambda d: d.x0)
+            for i, draft in enumerate(row):
+                limit = _shape_left(row[i + 1], half) if i + 1 < len(row) else None
+                _place_label(draft, limit, opts, measure)
+                counts[draft.state] += 1
+
+        heights = [row_h] * n_sub  # hauteur de chaque sous-ligne : le plus haut de ses éléments
         for d in drafts:
-            heights[d.sublane] = max(heights[d.sublane], d.height)
+            heights[d.sublane] = max(heights[d.sublane], d.height, d.block)
         tops: list[float] = []
         cursor = 0.0
         for h in heights:
@@ -331,7 +428,7 @@ def compute_layout(
                 event=d.event,
                 x0=d.x0,
                 x1=d.x1,
-                left=d.left,
+                left=_shape_left(d, half),
                 right=d.right,
                 y=y + tops[d.sublane] + (heights[d.sublane] - d.height) / 2,
                 height=d.height,
@@ -339,6 +436,7 @@ def compute_layout(
                 label_lines=d.lines,
                 label_inside=d.inside,
                 label_x=d.label_x,
+                label_state=d.state,
             )
             for d in drafts
         )
@@ -354,4 +452,7 @@ def compute_layout(
         height=y - opts.lane_spacing,
         t_start=t0,
         t_end=t1,
+        titles_full=counts[LABEL_FULL],
+        titles_truncated=counts[LABEL_TRUNCATED],
+        titles_hidden=counts[LABEL_HIDDEN],
     )
