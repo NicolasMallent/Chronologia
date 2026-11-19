@@ -83,3 +83,27 @@ def test_fichier_corrompu_garde_les_defauts_et_n_est_pas_ecrase(tmp_path, conten
 
 def test_json_est_stable():
     assert json.loads(default_registry().to_json())["version"] == 1
+
+
+def test_deplacement_borne():
+    registry = CategoryRegistry()
+    a, b, c = (registry.add(n, col) for n, col in (("A", "red"), ("B", "blue"), ("C", "green")))
+    registry.move(c, -1)
+    assert [x.name for x in registry] == ["A", "C", "B"]
+    registry.move(a, -5)
+    registry.move(b, 5)
+    assert [x.name for x in registry] == ["A", "C", "B"]
+
+
+def test_erreurs_avec_code():
+    registry = CategoryRegistry()
+    registry.add("A", "red")
+    for name, color, code in (
+        ("", "blue", CategoryError.NAME_INVALID),
+        ("B", "nope", CategoryError.COLOR_UNKNOWN),
+        ("a", "blue", CategoryError.NAME_EXISTS),
+        ("B", "#FF0000", CategoryError.COLOR_USED),
+    ):
+        with pytest.raises(CategoryError) as info:
+            registry.check(name, color)
+        assert info.value.code == code

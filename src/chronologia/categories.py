@@ -29,7 +29,21 @@ MAX_CONFIG_BYTES = 1024 * 1024
 
 
 class CategoryError(ValueError):
-    """Catégorie invalide (nom vide, couleur inconnue, couleur ou nom déjà pris)."""
+    """Catégorie invalide (nom vide, couleur inconnue, couleur ou nom déjà pris).
+
+    ``code`` et ``detail`` permettent à l'interface de traduire le message.
+    """
+
+    NAME_INVALID = "name_invalid"
+    COLOR_UNKNOWN = "color_unknown"
+    NAME_EXISTS = "name_exists"
+    COLOR_USED = "color_used"
+    TOO_MANY = "too_many"
+
+    def __init__(self, message: str, code: str = "", detail: str = "") -> None:
+        super().__init__(message)
+        self.code = code
+        self.detail = detail
 
 
 @dataclass(frozen=True)
@@ -41,7 +55,9 @@ class Category:
     def color_hex(self) -> str:
         resolved = resolve_color(self.color)
         if resolved is None:  # garanti par CategoryRegistry
-            raise CategoryError(f"couleur inconnue : {self.color!r}")
+            raise CategoryError(
+                f"couleur inconnue : {self.color!r}", CategoryError.COLOR_UNKNOWN, self.color
+            )
         return resolved
 
 
@@ -72,39 +88,50 @@ class CategoryRegistry:
     def __len__(self) -> int:
         return len(self._items)
 
-    def _check(self, name: str, color: str, ignore: Category | None = None) -> tuple[str, str]:
+    def check(self, name: str, color: str, ignore: Category | None = None) -> tuple[str, str]:
+        """Valide un couple (nom, couleur) ; lève :class:`CategoryError` sinon."""
         name = name.strip()
         if not name or len(name) > MAX_NAME_LENGTH:
-            raise CategoryError("nom de catégorie vide ou trop long")
+            raise CategoryError("nom de catégorie vide ou trop long", CategoryError.NAME_INVALID)
         hex_color = resolve_color(color)
         if hex_color is None:
-            raise CategoryError(f"couleur inconnue : {color!r}")
+            raise CategoryError(f"couleur inconnue : {color!r}", CategoryError.COLOR_UNKNOWN, color)
         for other in self._items:
             if other is ignore:
                 continue
             if other.name.casefold() == name.casefold():
-                raise CategoryError(f"le nom {name!r} existe déjà")
+                raise CategoryError(f"le nom {name!r} existe déjà", CategoryError.NAME_EXISTS, name)
             if other.color_hex == hex_color:
-                raise CategoryError(f"la couleur {color!r} est déjà utilisée par {other.name!r}")
+                raise CategoryError(
+                    f"la couleur {color!r} est déjà utilisée par {other.name!r}",
+                    CategoryError.COLOR_USED,
+                    other.name,
+                )
         return name, color.strip()
 
     def add(self, name: str, color: str) -> Category:
         if len(self._items) >= MAX_CATEGORIES:
-            raise CategoryError("trop de catégories")
-        name, color = self._check(name, color)
+            raise CategoryError("trop de catégories", CategoryError.TOO_MANY)
+        name, color = self.check(name, color)
         category = Category(name, color)
         self._items.append(category)
         return category
 
     def update(self, old: Category, name: str, color: str) -> Category:
         """Renomme ou recolore ``old`` en gardant sa position."""
-        name, color = self._check(name, color, ignore=old)
+        name, color = self.check(name, color, ignore=old)
         new = Category(name, color)
         self._items[self._items.index(old)] = new
         return new
 
     def remove(self, category: Category) -> None:
         self._items.remove(category)
+
+    def move(self, category: Category, offset: int) -> None:
+        """Décale ``category`` de ``offset`` rangs (borné aux extrémités)."""
+        index = self._items.index(category)
+        target = max(0, min(len(self._items) - 1, index + offset))
+        self._items.insert(target, self._items.pop(index))
 
     def for_color(self, color: str) -> Category | None:
         hex_color = resolve_color(color)

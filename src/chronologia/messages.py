@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import QCoreApplication
 
+from .categories import CategoryError
 from .csv_io import CsvFormatError
 from .model import ImportIssue
 
@@ -55,3 +56,25 @@ def format_error_text(error: CsvFormatError) -> str:
     if error.code == CsvFormatError.FILE_TOO_LARGE:
         return QCoreApplication.translate("Messages", "Le fichier est trop volumineux.")
     return str(error)
+
+
+def category_error_text(exc: CategoryError) -> str:
+    """Erreur de catégorie, dans la langue de l'interface."""
+    code, detail = exc.code, exc.detail
+    if code == CategoryError.NAME_INVALID:
+        return QCoreApplication.translate(
+            "Messages", "Le nom de la catégorie est vide ou trop long."
+        )
+    if code == CategoryError.COLOR_UNKNOWN:
+        return QCoreApplication.translate(
+            "Messages", "Couleur inconnue (nom comme « red » ou code #FF0000)."
+        )
+    if code == CategoryError.NAME_EXISTS:
+        return QCoreApplication.translate("Messages", "Une catégorie porte déjà ce nom.")
+    if code == CategoryError.COLOR_USED:
+        return QCoreApplication.translate(
+            "Messages", "Cette couleur est déjà utilisée par « %1 »."
+        ).replace("%1", detail)
+    if code == CategoryError.TOO_MANY:
+        return QCoreApplication.translate("Messages", "Trop de catégories.")
+    return str(exc)

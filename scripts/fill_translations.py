@@ -13,6 +13,18 @@ from pathlib import Path
 TS_DIR = Path(__file__).resolve().parent.parent / "src" / "chronologia" / "translations"
 
 # français : (anglais, espagnol)
+ORDER_HINT = (
+    "L'ordre ci-dessous est celui des lignes de la frise. "
+    "Les événements d'une couleur sans catégorie restent affichés."
+)
+ORDER_HINT_EN = (
+    "The order below is the order of the timeline lanes. "
+    "Events whose color has no category remain displayed."
+)
+ORDER_HINT_ES = (
+    "El orden de abajo es el de las filas de la cronología. "
+    "Los eventos de un color sin categoría siguen mostrándose."
+)
 T: dict[str, tuple[str, str]] = {
     "Ajouter un événement": ("Add an event", "Añadir un evento"),
     "Modifier un événement": ("Edit an event", "Modificar un evento"),
@@ -184,6 +196,41 @@ T: dict[str, tuple[str, str]] = {
     "Supprimer": ("Delete", "Eliminar"),
     "Nouvel événement ici…": ("New event here…", "Nuevo evento aquí…"),
     "Ouvrez un fichier CSV (Ctrl+O)": ("Open a CSV file (Ctrl+O)", "Abra un archivo CSV (Ctrl+O)"),
+    "Nom": ("Name", "Nombre"),
+    "Modifier la catégorie": ("Edit category", "Modificar la categoría"),
+    "Nouvelle catégorie": ("New category", "Nueva categoría"),
+    "Gérer les catégories": ("Manage categories", "Gestionar categorías"),
+    "&Gérer les catégories…": ("&Manage categories…", "&Gestionar categorías…"),
+    "Ajouter…": ("Add…", "Añadir…"),
+    "Monter": ("Move up", "Subir"),
+    "Descendre": ("Move down", "Bajar"),
+    "Valeurs par défaut": ("Defaults", "Valores predeterminados"),
+    ORDER_HINT: (ORDER_HINT_EN, ORDER_HINT_ES),
+    "Supprimer la catégorie « %1 » ?": (
+        "Delete category “%1”?",
+        "¿Eliminar la categoría «%1»?",
+    ),
+    "Remplacer toutes les catégories par celles livrées avec l'application ?": (
+        "Replace all categories with those shipped with the application?",
+        "¿Reemplazar todas las categorías por las incluidas con la aplicación?",
+    ),
+    "Catégories appliquées mais non enregistrées : %1": (
+        "Categories applied but not saved: %1",
+        "Categorías aplicadas pero no guardadas: %1",
+    ),
+    "Le nom de la catégorie est vide ou trop long.": (
+        "The category name is empty or too long.",
+        "El nombre de la categoría está vacío o es demasiado largo.",
+    ),
+    "Une catégorie porte déjà ce nom.": (
+        "A category already has this name.",
+        "Ya existe una categoría con este nombre.",
+    ),
+    "Cette couleur est déjà utilisée par « %1 ».": (
+        "This color is already used by “%1”.",
+        "Este color ya lo usa «%1».",
+    ),
+    "Trop de catégories.": ("Too many categories.", "Demasiadas categorías."),
 }
 
 
