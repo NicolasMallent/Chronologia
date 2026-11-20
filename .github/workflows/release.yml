@@ -1,0 +1,184 @@
+name: Release
+
+# Les paquets (.deb et Setup.exe) ne sont construits que lorsqu'une release GitHub est publiée.
+# Ils sont ensuite joints à cette release, avec leurs empreintes SHA-256.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Vérifier la version et les tests
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      deb_version: ${{ steps.version.outputs.deb_version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Le tag doit correspondre à la version du projet
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          python - <<'PY'
+          import os, re, sys, tomllib
+          tag = os.environ["TAG"]
+          match = re.fullmatch(r"v(\d+\.\d+\.\d+)(?:-(rc\d+))?", tag)
+          if not match:
+              sys.exit(f"Tag invalide : {tag!r} (attendu : vX.Y.Z ou vX.Y.Z-rcN)")
+          base, rc = match.group(1), match.group(2)
+          prerelease = os.environ["PRERELEASE"] == "true"
+          if bool(rc) != prerelease:
+              sys.exit("Un tag -rcN doit être publié comme pré-release, et inversement")
+          pyproject = tomllib.load(open("pyproject.toml", "rb"))["project"]["version"]
+          init = re.search(r'__version__ = "([^"]+)"', open("src/chronologia/__init__.py").read())
+          if pyproject != base or not init or init.group(1) != base:
+              sys.exit(f"Versions incohérentes : tag {base}, pyproject {pyproject}, __init__ {init and init.group(1)}")
+          version = f"{base}-{rc}" if rc else base  # affichée (Setup.exe)
+          deb_version = f"{base}~{rc}" if rc else base  # « ~ » : avant la version finale pour dpkg
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"version={version}\ndeb_version={deb_version}\n")
+          PY
+
+      - name: Bibliothèques système de Qt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libxkbcommon0 libdbus-1-3 libfontconfig1 libglib2.0-0
+
+      - name: Lint et tests
+        run: |
+          python -m pip install -e ".[dev]"
+          ruff check src tests scripts packaging
+          pytest
+
+  deb:
+    name: Paquet .deb
+    needs: verify
+    # Ubuntu 22.04 (glibc 2.35) : le paquet fonctionne aussi sur Debian 12 et Ubuntu 22.04+
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write # joindre le fichier à la release
+    env:
+      VERSION: ${{ needs.verify.outputs.deb_version }}
+      TAG: ${{ github.event.release.tag_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: packaging/requirements-build.txt
+
+      - name: Bibliothèques système de Qt
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 \
+            libglib2.0-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1
+
+      - name: Construire l'application
+        run: |
+          python -m pip install -r packaging/requirements-build.txt
+          pyinstaller --noconfirm --clean packaging/chronologia.spec
+
+      - name: Auto-diagnostic du bundle
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: dist/chronologia/chronologia --smoke-test
+
+      - name: Construire le .deb
+        run: packaging/deb/build_deb.sh "$VERSION" dist/chronologia dist
+
+      - name: Vérifier le .deb installé
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          dpkg-deb --info "dist/chronologia_${VERSION}_amd64.deb"
+          sudo apt-get install -y "./dist/chronologia_${VERSION}_amd64.deb"
+          chronologia --smoke-test
+
+      - name: Joindre à la release
+        run: |
+          cd dist
+          sha256sum "chronologia_${VERSION}_amd64.deb" > "chronologia_${VERSION}_amd64.deb.sha256"
+          gh release upload "$TAG" "chronologia_${VERSION}_amd64.deb" \
+            "chronologia_${VERSION}_amd64.deb.sha256" --clobber --repo "$GITHUB_REPOSITORY"
+
+  windows:
+    name: Installateur Windows
+    needs: verify
+    runs-on: windows-2022
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.verify.outputs.version }}
+      TAG: ${{ github.event.release.tag_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: packaging/requirements-build.txt
+
+      - name: Construire l'application
+        run: |
+          python -m pip install -r packaging/requirements-build.txt
+          pyinstaller --noconfirm --clean packaging/chronologia.spec
+
+      - name: Auto-diagnostic du bundle
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          $p = Start-Process dist\chronologia\chronologia.exe -ArgumentList "--smoke-test" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Auto-diagnostic en échec (code $($p.ExitCode))" }
+
+      - name: Construire l'installateur (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y }
+          & $iscc "/DAppVersion=$env:VERSION" packaging\windows\chronologia.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC a échoué" }
+
+      - name: Vérifier l'installation silencieuse
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          $setup = "dist\Chronologia-Setup-$env:VERSION.exe"
+          $target = Join-Path $env:RUNNER_TEMP "Chronologia"
+          $i = Start-Process $setup -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART","/DIR=$target" -Wait -PassThru
+          if ($i.ExitCode -ne 0) { throw "Installation en échec (code $($i.ExitCode))" }
+          $p = Start-Process "$target\chronologia.exe" -ArgumentList "--smoke-test" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Auto-diagnostic de l'installation en échec (code $($p.ExitCode))" }
+
+      - name: Joindre à la release
+        shell: pwsh
+        run: |
+          Set-Location dist
+          $file = "Chronologia-Setup-$env:VERSION.exe"
+          $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLower()
+          "$hash  $file" | Out-File -Encoding ascii "$file.sha256"
+          gh release upload $env:TAG $file "$file.sha256" --clobber --repo $env:GITHUB_REPOSITORY

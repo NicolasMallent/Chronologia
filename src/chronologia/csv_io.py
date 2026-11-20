@@ -1,0 +1,221 @@
+"""Import et export CSV des événements.
+
+Import tolérant : une ligne douteuse est corrigée ou ignorée et signalée dans
+``ImportResult.issues``, sans bloquer le fichier. Tout reste local (aucun accès réseau).
+"""
+
+from __future__ import annotations
+
+import csv
+import io
+import os
+import tempfile
+from pathlib import Path
+
+from .colors import DEFAULT_COLOR_HEX, resolve_color
+from .dates import DateParseError, parse_date
+from .model import (
+    MAX_EVENTS,
+    MAX_SOURCE_LENGTH,
+    MAX_TITLE_LENGTH,
+    Event,
+    ImportIssue,
+    ImportResult,
+)
+
+REQUIRED_COLUMNS = ("start", "end", "title", "color")
+OPTIONAL_COLUMNS = ("source",)
+MAX_FILE_BYTES = 20 * 1024 * 1024  # garde-fou contre un fichier démesuré
+_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+class CsvFormatError(ValueError):
+    """Le fichier est inutilisable (colonne obligatoire absente, trop gros...).
+
+    ``code`` et ``detail`` permettent à l'interface de traduire le message.
+    """
+
+    EMPTY_FILE = "empty_file"
+    MISSING_COLUMNS = "missing_columns"
+    FILE_TOO_LARGE = "file_too_large"
+    MALFORMED = "malformed"
+
+    def __init__(self, message: str, code: str = "", detail: str = "") -> None:
+        super().__init__(message)
+        self.code = code
+        self.detail = detail
+
+
+def _decode(raw: bytes) -> str:
+    try:
+        return raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        return raw.decode("cp1252", errors="replace")
+
+
+def _unescape(text: str) -> str:
+    """Retire l'apostrophe ajoutée à l'export pour neutraliser une formule."""
+    if len(text) > 1 and text[0] == "'" and text[1] in _FORMULA_PREFIXES:
+        return text[1:]
+    return text
+
+
+def _escape(text: str) -> str:
+    """Neutralise les formules (``=``, ``+``, ``-``, ``@``) à l'ouverture dans un tableur."""
+    return "'" + text if text.startswith(_FORMULA_PREFIXES) else text
+
+
+def _detect_delimiter(header_line: str) -> str:
+    return ";" if header_line.count(";") > header_line.count(",") else ","
+
+
+def read_events(path: str | Path) -> ImportResult:
+    """Lit un fichier CSV (UTF-8 avec ou sans BOM, sinon Windows-1252)."""
+    # lecture bornée : un fichier spécial (ex. /dev/zero) ou démesuré ne doit pas saturer la mémoire
+    with open(path, "rb") as f:
+        raw = f.read(MAX_FILE_BYTES + 1)
+    if len(raw) > MAX_FILE_BYTES:
+        raise CsvFormatError("fichier trop volumineux", CsvFormatError.FILE_TOO_LARGE)
+    return parse_events(raw)
+
+
+def parse_events(raw: bytes) -> ImportResult:
+    text = _decode(raw)
+    first_line = text.split("\n", 1)[0]
+    reader = csv.reader(io.StringIO(text, newline=""), delimiter=_detect_delimiter(first_line))
+    try:
+        header = next(reader)
+    except StopIteration:
+        raise CsvFormatError("fichier vide", CsvFormatError.EMPTY_FILE) from None
+    except csv.Error:
+        raise CsvFormatError("fichier mal formé", CsvFormatError.MALFORMED, "1") from None
+
+    names = [h.strip().lower() for h in header]
+    missing = [c for c in REQUIRED_COLUMNS if c not in names]
+    if missing:
+        raise CsvFormatError(
+            "colonnes obligatoires absentes : " + ", ".join(missing),
+            CsvFormatError.MISSING_COLUMNS,
+            ", ".join(missing),
+        )
+    index = {
+        name: names.index(name) for name in REQUIRED_COLUMNS + OPTIONAL_COLUMNS if name in names
+    }
+
+    def cell(row: list[str], name: str) -> str:
+        i = index.get(name)
+        return row[i].strip() if i is not None and i < len(row) else ""
+
+    result = ImportResult()
+    while True:
+        try:
+            row = next(reader)
+        except StopIteration:
+            break
+        except csv.Error:  # champ démesuré, guillemets incohérents...
+            raise CsvFormatError(
+                "fichier mal formé", CsvFormatError.MALFORMED, str(reader.line_num + 1)
+            ) from None
+        line = reader.line_num
+        if not any(c.strip() for c in row):
+            continue
+        if len(result.events) >= MAX_EVENTS:
+            result.issues.append(
+                ImportIssue(
+                    line,
+                    f"plus de {MAX_EVENTS} événements : import arrêté",
+                    skipped=True,
+                    code=ImportIssue.TOO_MANY_EVENTS,
+                    detail=str(MAX_EVENTS),
+                )
+            )
+            break
+        title = _unescape(cell(row, "title"))
+        if not title:
+            result.issues.append(
+                ImportIssue(line, "titre vide", skipped=True, code=ImportIssue.EMPTY_TITLE)
+            )
+            continue
+        start_text, end_text = cell(row, "start"), cell(row, "end")
+        try:
+            start = parse_date(start_text)
+        except DateParseError as exc:
+            result.issues.append(
+                ImportIssue(line, str(exc), True, ImportIssue.INVALID_START, start_text)
+            )
+            continue
+        try:
+            end = parse_date(end_text) if end_text else start
+        except DateParseError as exc:
+            result.issues.append(
+                ImportIssue(line, str(exc), True, ImportIssue.INVALID_END, end_text)
+            )
+            continue
+        if end.value < start.value:
+            start, end = end, start
+            result.issues.append(
+                ImportIssue(
+                    line,
+                    "fin avant début : dates remises dans l'ordre",
+                    code=ImportIssue.END_BEFORE_START,
+                )
+            )
+        color = cell(row, "color")
+        if resolve_color(color) is None:
+            result.issues.append(
+                ImportIssue(
+                    line,
+                    f"couleur inconnue {color!r} : {DEFAULT_COLOR_HEX} utilisée",
+                    code=ImportIssue.UNKNOWN_COLOR,
+                    detail=color,
+                )
+            )
+            color = DEFAULT_COLOR_HEX
+        source = _unescape(cell(row, "source"))
+        if len(title) > MAX_TITLE_LENGTH:
+            title = title[:MAX_TITLE_LENGTH]
+            result.issues.append(
+                ImportIssue(line, "titre tronqué", code=ImportIssue.TITLE_TRUNCATED)
+            )
+        if len(source) > MAX_SOURCE_LENGTH:
+            source = source[:MAX_SOURCE_LENGTH]
+            result.issues.append(
+                ImportIssue(line, "source tronquée", code=ImportIssue.SOURCE_TRUNCATED)
+            )
+        result.events.append(Event(start, end, title, color, source))
+    return result
+
+
+def write_events(path: str | Path, events: list[Event]) -> None:
+    """Écrit les événements en CSV UTF-8 avec BOM (lisible par les tableurs).
+
+    L'écriture est atomique : en cas d'échec, l'ancien fichier reste intact.
+    """
+    target = Path(path)
+    fd, tmp = tempfile.mkstemp(dir=target.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8-sig", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(REQUIRED_COLUMNS + OPTIONAL_COLUMNS)
+            for e in events:
+                writer.writerow(
+                    [e.start.to_csv(), e.end.to_csv(), _escape(e.title), e.color, _escape(e.source)]
+                )
+        os.chmod(tmp, _target_mode(target))
+        os.replace(tmp, target)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def _target_mode(target: Path) -> int:
+    """Droits du fichier écrit : ceux de l'ancien fichier, sinon ceux d'un nouveau fichier.
+
+    (``mkstemp`` crée en 0600 : sans cela, un fichier partagé deviendrait illisible pour les autres.)
+    """
+    try:
+        return target.stat().st_mode & 0o777
+    except FileNotFoundError:
+        umask = os.umask(0)
+        os.umask(umask)
+        return 0o666 & ~umask
