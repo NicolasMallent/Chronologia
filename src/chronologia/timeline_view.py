@@ -51,7 +51,9 @@ class TimelineView(QGraphicsView):
     layoutChanged = Signal()  # nombre d'événements affichés ou échelle modifiés
     editRequested = Signal(object)  # Event
     deleteRequested = Signal(object)  # Event
-    newRequested = Signal(str)  # date de début proposée (aaaa) ; vide si inconnue
+    newRequested = Signal(
+        str, str
+    )  # date de début proposée (aaaa), couleur de la ligne ; vides si inconnues
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -139,6 +141,17 @@ class TimelineView(QGraphicsView):
             return None
         scene_x = self.horizontalScrollBar().value() + view_x
         return self._layout.t_start + (scene_x - self._shift) / self._ppy
+
+    def lane_color_at(self, view_y: float) -> str:
+        """Couleur (``#rrggbb``) de la catégorie dont la ligne est à cette hauteur ; vide sinon."""
+        if self._layout is None:
+            return ""
+        scene_y = self.mapToScene(0, round(view_y)).y()
+        for lane in self._layout.lanes:  # les bandes se touchent : 7 px de marge de chaque côté
+            top = HEADER + lane.y - 7
+            if top <= scene_y < top + lane.height + 14:
+                return lane.color_hex
+        return ""
 
     def set_visible_categories(self, names: set[str] | None) -> None:
         self._visible = names
@@ -252,8 +265,9 @@ class TimelineView(QGraphicsView):
         else:
             year = self.year_at_view_x(event.pos().x())
             hint = f"{int(year):04d}" if year is not None and year >= 1 else ""
+            color = self.lane_color_at(event.pos().y())
             menu.addAction(self.tr("Nouvel événement ici…")).triggered.connect(
-                lambda: self.newRequested.emit(hint)
+                lambda: self.newRequested.emit(hint, color)
             )
         menu.exec(event.globalPos())
 
@@ -266,7 +280,12 @@ class TimelineView(QGraphicsView):
         measure, line_height = make_measurer(self._font)
         opts = LayoutOptions(px_per_year=self._ppy, line_height=line_height)
         self._layout = compute_layout(
-            self._events, self._registry, measure, opts, visible_categories=self._visible
+            self._events,
+            self._registry,
+            measure,
+            opts,
+            visible_categories=self._visible,
+            include_empty=True,
         )
         layout = self._layout
         self._matches = 0
@@ -296,17 +315,17 @@ class TimelineView(QGraphicsView):
     def _add_item(self, item: LayoutItem, opts: LayoutOptions) -> None:
         event = item.event
         color = QColor(event.color_hex)
-        pen = QPen(color.darker(130), 1.2)
+        pen = QPen(color.darker(120), 1.1)
         text_color = self.palette().text().color()
         top = HEADER + item.y
         group = QGraphicsItemGroup()
 
-        shape = QGraphicsPathItem(item_shape_path(item, opts.marker_size, self._shift, HEADER))
+        shape = QGraphicsPathItem(item_shape_path(item, opts.point_width, self._shift, HEADER))
         if item.is_point:
             shape.setBrush(color)
         else:
             fill = QColor(color)
-            fill.setAlpha(70)
+            fill.setAlpha(80)
             shape.setBrush(fill)
         shape.setPen(pen)
         group.addToGroup(shape)
@@ -345,7 +364,7 @@ class TimelineView(QGraphicsView):
                 painter.fillRect(
                     QRectF(rect.left(), HEADER + lane.y - 7, rect.width(), lane.height + 14), band
                 )
-        grid = QPen(self.palette().mid().color(), 0.6, Qt.PenStyle.DotLine)
+        grid = QPen(self.palette().mid().color(), 0.8, Qt.PenStyle.DotLine)
         painter.setPen(grid)
         for tick in layout.ticks:
             x = self._shift + tick.x
@@ -356,10 +375,12 @@ class TimelineView(QGraphicsView):
         visible = self._visible_rect()
         base = self.palette().base()
         text_color = self.palette().text().color()
+        muted = self.palette().placeholderText().color()
+        line_color = self.palette().midlight().color()
         painter.setFont(self._font)
 
         if layout is None or not layout.lanes:
-            painter.setPen(text_color)
+            painter.setPen(muted)
             painter.drawText(
                 visible, Qt.AlignmentFlag.AlignCenter, self.tr("Ouvrez un fichier CSV (Ctrl+O)")
             )
@@ -368,7 +389,7 @@ class TimelineView(QGraphicsView):
         # axe des années
         header = QRectF(visible.left(), visible.top(), visible.width(), HEADER)
         painter.fillRect(header, base)
-        painter.setPen(text_color)
+        painter.setPen(muted)
         for tick in layout.ticks:
             x = self._shift + tick.x
             painter.drawText(
@@ -376,7 +397,7 @@ class TimelineView(QGraphicsView):
                 Qt.AlignmentFlag.AlignCenter,
                 tick.label,
             )
-        painter.setPen(QPen(self.palette().mid().color(), 1))
+        painter.setPen(QPen(line_color, 1))
         painter.drawLine(
             QPointF(visible.left(), visible.top() + HEADER),
             QPointF(visible.right(), visible.top() + HEADER),
@@ -384,17 +405,20 @@ class TimelineView(QGraphicsView):
 
         # colonne des catégories
         painter.fillRect(QRectF(visible.left(), visible.top(), LEFT_COLUMN, visible.height()), base)
-        painter.setPen(QPen(self.palette().mid().color(), 1))
+        painter.setPen(QPen(line_color, 1))
         painter.drawLine(
             QPointF(visible.left() + LEFT_COLUMN, visible.top()),
             QPointF(visible.left() + LEFT_COLUMN, visible.bottom()),
         )
+        bold = QFont(self._font)
+        bold.setWeight(QFont.Weight.DemiBold)
+        painter.setFont(bold)
         metrics = painter.fontMetrics()
         for lane in layout.lanes:
             y = HEADER + lane.y
             painter.setBrush(QColor(lane.color_hex))
             painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(QPointF(visible.left() + 14, y + 8), 5, 5)
+            painter.drawEllipse(QPointF(visible.left() + 16, y + 9), 5.5, 5.5)
             painter.setPen(text_color)
-            name = metrics.elidedText(lane.name, Qt.TextElideMode.ElideRight, int(LEFT_COLUMN - 34))
-            painter.drawText(QPointF(visible.left() + 26, y + 12), name)
+            name = metrics.elidedText(lane.name, Qt.TextElideMode.ElideRight, int(LEFT_COLUMN - 40))
+            painter.drawText(QPointF(visible.left() + 30, y + 13), name)

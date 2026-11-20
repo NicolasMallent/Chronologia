@@ -4,52 +4,52 @@
 <context>
     <name>CategoriesDialog</name>
     <message>
-        <location filename="../categories_dialog.py" line="113"/>
+        <location filename="../categories_dialog.py" line="116"/>
         <source>Gérer les catégories</source>
         <translation>Gestionar categorías</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="120"/>
+        <location filename="../categories_dialog.py" line="123"/>
         <source>Ajouter…</source>
         <translation>Añadir…</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="121"/>
+        <location filename="../categories_dialog.py" line="124"/>
         <source>Modifier…</source>
         <translation>Modificar…</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="122"/>
+        <location filename="../categories_dialog.py" line="125"/>
         <source>Supprimer</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="123"/>
+        <location filename="../categories_dialog.py" line="126"/>
         <source>Monter</source>
         <translation>Subir</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="124"/>
+        <location filename="../categories_dialog.py" line="127"/>
         <source>Descendre</source>
         <translation>Bajar</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="125"/>
+        <location filename="../categories_dialog.py" line="128"/>
         <source>Valeurs par défaut</source>
         <translation>Valores predeterminados</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="144"/>
+        <location filename="../categories_dialog.py" line="147"/>
         <source>L&apos;ordre ci-dessous est celui des lignes de la frise. Les événements d&apos;une couleur sans catégorie restent affichés.</source>
         <translation>El orden de abajo es el de las filas de la cronología. Los eventos de un color sin categoría siguen mostrándose.</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="217"/>
+        <location filename="../categories_dialog.py" line="234"/>
         <source>Supprimer la catégorie « %1 » ?</source>
         <translation>¿Eliminar la categoría «%1»?</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="233"/>
+        <location filename="../categories_dialog.py" line="251"/>
         <source>Remplacer toutes les catégories par celles livrées avec l&apos;application ?</source>
         <translation>¿Reemplazar todas las categorías por las incluidas con la aplicación?</translation>
     </message>
@@ -57,32 +57,32 @@
 <context>
     <name>CategoryEditDialog</name>
     <message>
-        <location filename="../categories_dialog.py" line="43"/>
+        <location filename="../categories_dialog.py" line="44"/>
         <source>Modifier la catégorie</source>
         <translation>Modificar la categoría</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="43"/>
+        <location filename="../categories_dialog.py" line="44"/>
         <source>Nouvelle catégorie</source>
         <translation>Nueva categoría</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="48"/>
+        <location filename="../categories_dialog.py" line="49"/>
         <source>red ou #FF0000</source>
         <translation>red o #FF0000</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="51"/>
+        <location filename="../categories_dialog.py" line="52"/>
         <source>Choisir…</source>
         <translation>Elegir…</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="61"/>
+        <location filename="../categories_dialog.py" line="62"/>
         <source>Nom</source>
         <translation>Nombre</translation>
     </message>
     <message>
-        <location filename="../categories_dialog.py" line="62"/>
+        <location filename="../categories_dialog.py" line="63"/>
         <source>Couleur</source>
         <translation>Color</translation>
     </message>
@@ -90,130 +90,135 @@
 <context>
     <name>Document</name>
     <message>
-        <location filename="../document.py" line="21"/>
+        <location filename="../document.py" line="23"/>
         <source>Ajouter un événement</source>
         <translation>Añadir un evento</translation>
     </message>
     <message>
-        <location filename="../document.py" line="35"/>
+        <location filename="../document.py" line="37"/>
         <source>Modifier un événement</source>
         <translation>Modificar un evento</translation>
     </message>
     <message>
-        <location filename="../document.py" line="49"/>
+        <location filename="../document.py" line="51"/>
         <source>Supprimer un événement</source>
         <translation>Eliminar un evento</translation>
+    </message>
+    <message>
+        <location filename="../document.py" line="69"/>
+        <source>Changer la couleur d&apos;une catégorie</source>
+        <translation>Cambiar el color de una categoría</translation>
     </message>
 </context>
 <context>
     <name>EventDialog</name>
     <message>
-        <location filename="../event_dialog.py" line="46"/>
+        <location filename="../event_dialog.py" line="47"/>
         <source>Modifier l&apos;événement</source>
         <translation>Modificar el evento</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="46"/>
+        <location filename="../event_dialog.py" line="47"/>
         <source>Nouvel événement</source>
         <translation>Nuevo evento</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="53"/>
+        <location filename="../event_dialog.py" line="54"/>
         <source>aaaa, aaaamm, aaaammjj ou jj/mm/aaaa</source>
         <translation>aaaa, aaaamm, aaaammdd o dd/mm/aaaa</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="55"/>
+        <location filename="../event_dialog.py" line="56"/>
         <source>vide = événement ponctuel</source>
         <translation>vacío = evento puntual</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="57"/>
+        <location filename="../event_dialog.py" line="58"/>
         <source>Commentaire ou source (affiché au survol)</source>
         <translation>Comentario o fuente (se muestra al pasar el ratón)</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="61"/>
+        <location filename="../event_dialog.py" line="62"/>
         <source>Couleur personnalisée</source>
         <translation>Color personalizado</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="65"/>
+        <location filename="../event_dialog.py" line="66"/>
         <source>red ou #FF0000</source>
         <translation>red o #FF0000</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="68"/>
+        <location filename="../event_dialog.py" line="69"/>
         <source>Choisir…</source>
         <translation>Elegir…</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="80"/>
+        <location filename="../event_dialog.py" line="81"/>
         <source>Titre</source>
         <translation>Título</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="81"/>
+        <location filename="../event_dialog.py" line="82"/>
         <source>Début</source>
         <translation>Inicio</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="82"/>
+        <location filename="../event_dialog.py" line="83"/>
         <source>Fin</source>
         <translation>Fin</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="83"/>
+        <location filename="../event_dialog.py" line="84"/>
         <source>Catégorie</source>
         <translation>Categoría</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="84"/>
+        <location filename="../event_dialog.py" line="85"/>
         <source>Couleur</source>
         <translation>Color</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="85"/>
+        <location filename="../event_dialog.py" line="86"/>
         <source>Source</source>
         <translation>Fuente</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="94"/>
+        <location filename="../event_dialog.py" line="95"/>
         <source>Supprimer</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="151"/>
+        <location filename="../event_dialog.py" line="156"/>
         <source>Le titre est obligatoire.</source>
         <translation>El título es obligatorio.</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="152"/>
+        <location filename="../event_dialog.py" line="157"/>
         <source>Le titre est trop long.</source>
         <translation>El título es demasiado largo.</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="154"/>
+        <location filename="../event_dialog.py" line="159"/>
         <source>Date de début invalide (aaaa, aaaamm, aaaammjj, mm/aaaa ou jj/mm/aaaa).</source>
         <translation>Fecha de inicio no válida (aaaa, aaaamm, aaaammdd, mm/aaaa o dd/mm/aaaa).</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="156"/>
+        <location filename="../event_dialog.py" line="161"/>
         <source>Date de fin invalide.</source>
         <translation>Fecha de fin no válida.</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="157"/>
+        <location filename="../event_dialog.py" line="162"/>
         <source>La fin ne peut pas précéder le début.</source>
         <translation>El fin no puede ser anterior al inicio.</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="159"/>
+        <location filename="../event_dialog.py" line="164"/>
         <source>Couleur inconnue (nom comme « red » ou code #FF0000).</source>
         <translation>Color desconocido (un nombre como «red» o un código como #FF0000).</translation>
     </message>
     <message>
-        <location filename="../event_dialog.py" line="161"/>
+        <location filename="../event_dialog.py" line="166"/>
         <source>La source est trop longue.</source>
         <translation>La fuente es demasiado larga.</translation>
     </message>
@@ -329,243 +334,249 @@
 <context>
     <name>FilterPanel</name>
     <message>
-        <location filename="../filter_panel.py" line="32"/>
+        <location filename="../filter_panel.py" line="44"/>
         <source>Tout</source>
         <translation>Todo</translation>
     </message>
     <message>
-        <location filename="../filter_panel.py" line="33"/>
+        <location filename="../filter_panel.py" line="45"/>
         <source>Aucun</source>
         <translation>Ninguno</translation>
+    </message>
+    <message>
+        <location filename="../filter_panel.py" line="86"/>
+        <source>Modifier la catégorie…</source>
+        <translation>Modificar la categoría…</translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../main_window.py" line="51"/>
-        <location filename="../main_window.py" line="226"/>
+        <location filename="../main_window.py" line="55"/>
+        <location filename="../main_window.py" line="266"/>
+        <location filename="../main_window.py" line="285"/>
         <source>Catégories</source>
         <translation>Categorías</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="71"/>
+        <location filename="../main_window.py" line="76"/>
         <source>Catégories personnalisées illisibles, valeurs par défaut utilisées : %1</source>
         <translation>Categorías personalizadas ilegibles, se usan los valores por defecto: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="79"/>
+        <location filename="../main_window.py" line="84"/>
         <source>&amp;Ouvrir un CSV…</source>
         <translation>&amp;Abrir CSV…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="82"/>
+        <location filename="../main_window.py" line="87"/>
         <source>&amp;Enregistrer</source>
         <translation>&amp;Guardar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="85"/>
+        <location filename="../main_window.py" line="90"/>
         <source>Enregistrer &amp;sous…</source>
         <translation>Guardar &amp;como…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="88"/>
+        <location filename="../main_window.py" line="93"/>
         <source>E&amp;xporter en PDF…</source>
         <translation>E&amp;xportar a PDF…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="91"/>
+        <location filename="../main_window.py" line="96"/>
         <source>&amp;Quitter</source>
         <translation>&amp;Salir</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="94"/>
+        <location filename="../main_window.py" line="99"/>
         <source>&amp;Fichier</source>
         <translation>&amp;Archivo</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="100"/>
+        <location filename="../main_window.py" line="105"/>
         <source>&amp;Nouvel événement…</source>
         <translation>&amp;Nuevo evento…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="103"/>
-        <location filename="../main_window.py" line="178"/>
+        <location filename="../main_window.py" line="108"/>
+        <location filename="../main_window.py" line="201"/>
         <source>Annuler</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="106"/>
-        <location filename="../main_window.py" line="179"/>
+        <location filename="../main_window.py" line="111"/>
+        <location filename="../main_window.py" line="202"/>
         <source>Rétablir</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="115"/>
+        <location filename="../main_window.py" line="120"/>
         <source>&amp;Gérer les catégories…</source>
         <translation>&amp;Gestionar categorías…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="117"/>
+        <location filename="../main_window.py" line="122"/>
         <source>&amp;Édition</source>
         <translation>&amp;Edición</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="123"/>
+        <location filename="../main_window.py" line="128"/>
         <source>Zoom +</source>
         <translation>Acercar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="126"/>
+        <location filename="../main_window.py" line="131"/>
         <source>Zoom −</source>
         <translation>Alejar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="129"/>
+        <location filename="../main_window.py" line="134"/>
         <source>Ajuster</source>
         <translation>Ajustar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="134"/>
+        <location filename="../main_window.py" line="139"/>
         <source>Rechercher un événement…</source>
         <translation>Buscar un evento…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="139"/>
+        <location filename="../main_window.py" line="148"/>
+        <source>Nouvel événement</source>
+        <translation>Nuevo evento</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="152"/>
         <source>Outils</source>
         <translation>Herramientas</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="150"/>
+        <location filename="../main_window.py" line="173"/>
         <source>&amp;Affichage</source>
         <translation>&amp;Ver</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="154"/>
+        <location filename="../main_window.py" line="177"/>
         <source>&amp;Langue</source>
         <translation>&amp;Idioma</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="170"/>
+        <location filename="../main_window.py" line="193"/>
         <source>Langue</source>
         <translation>Idioma</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="171"/>
+        <location filename="../main_window.py" line="194"/>
         <source>La nouvelle langue sera appliquée au prochain démarrage de Chronologia.</source>
         <translation>El nuevo idioma se aplicará la próxima vez que se inicie Chronologia.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="205"/>
+        <location filename="../main_window.py" line="230"/>
         <source>Supprimer l&apos;événement</source>
         <translation>Eliminar el evento</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="206"/>
+        <location filename="../main_window.py" line="231"/>
         <source>Supprimer « %1 » ? (Annulable avec Ctrl+Z)</source>
         <translation>¿Eliminar «%1»? (Se puede deshacer con Ctrl+Z)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="228"/>
+        <location filename="../main_window.py" line="287"/>
         <source>Catégories appliquées mais non enregistrées : %1</source>
         <translation>Categorías aplicadas pero no guardadas: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="264"/>
+        <location filename="../main_window.py" line="323"/>
         <source>Ouvrir un CSV</source>
         <translation>Abrir un CSV</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="266"/>
+        <location filename="../main_window.py" line="325"/>
         <source>Fichiers CSV (*.csv);;Tous les fichiers (*)</source>
         <translation>Archivos CSV (*.csv);;Todos los archivos (*)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="276"/>
+        <location filename="../main_window.py" line="335"/>
         <source>Import impossible</source>
         <translation>No se puede importar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="299"/>
+        <location filename="../main_window.py" line="358"/>
         <source>Enregistrer sous</source>
         <translation>Guardar como</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="299"/>
+        <location filename="../main_window.py" line="358"/>
         <source>Fichiers CSV (*.csv)</source>
         <translation>Archivos CSV (*.csv)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="311"/>
+        <location filename="../main_window.py" line="370"/>
         <source>Enregistrement impossible</source>
         <translation>No se puede guardar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="317"/>
+        <location filename="../main_window.py" line="376"/>
         <source>Enregistré : %1</source>
         <translation>Guardado: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="329"/>
+        <location filename="../main_window.py" line="388"/>
         <source>Exporter en PDF</source>
         <translation>Exportar a PDF</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="329"/>
+        <location filename="../main_window.py" line="388"/>
         <source>Fichiers PDF (*.pdf)</source>
         <translation>Archivos PDF (*.pdf)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="338"/>
+        <location filename="../main_window.py" line="397"/>
         <source>Export impossible</source>
         <translation>No se puede exportar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="341"/>
+        <location filename="../main_window.py" line="400"/>
         <source>PDF exporté : %1</source>
         <translation>PDF exportado: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="350"/>
+        <location filename="../main_window.py" line="409"/>
         <source>Modifications non enregistrées</source>
         <translation>Cambios sin guardar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="351"/>
+        <location filename="../main_window.py" line="410"/>
         <source>Enregistrer les modifications avant de continuer ?</source>
         <translation>¿Guardar los cambios antes de continuar?</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="369"/>
-        <source>Sans titre</source>
-        <translation>Sin título</translation>
-    </message>
-    <message>
-        <location filename="../main_window.py" line="390"/>
+        <location filename="../main_window.py" line="450"/>
         <source>Import terminé avec des anomalies</source>
         <translation>Importación terminada con incidencias</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="392"/>
+        <location filename="../main_window.py" line="452"/>
         <source>%1 événements importés, %2 lignes ignorées, %3 corrigées.</source>
         <translation>%1 eventos importados, %2 filas omitidas, %3 corregidas.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="397"/>
+        <location filename="../main_window.py" line="457"/>
         <source>ligne</source>
         <translation>fila</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="406"/>
+        <location filename="../main_window.py" line="466"/>
         <source>%1 événements affichés / %2</source>
         <translation>%1 eventos mostrados / %2</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="410"/>
+        <location filename="../main_window.py" line="470"/>
         <source>%1 titres masqués (zoomez pour les voir)</source>
         <translation>%1 títulos ocultos (acerque para verlos)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="415"/>
+        <location filename="../main_window.py" line="475"/>
         <source>%1 correspondances</source>
         <translation>%1 coincidencias</translation>
     </message>
@@ -661,22 +672,22 @@
 <context>
     <name>TimelineView</name>
     <message>
-        <location filename="../timeline_view.py" line="240"/>
+        <location filename="../timeline_view.py" line="259"/>
         <source>Modifier…</source>
         <translation>Modificar…</translation>
     </message>
     <message>
-        <location filename="../timeline_view.py" line="243"/>
+        <location filename="../timeline_view.py" line="262"/>
         <source>Supprimer</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location filename="../timeline_view.py" line="249"/>
+        <location filename="../timeline_view.py" line="269"/>
         <source>Nouvel événement ici…</source>
         <translation>Nuevo evento aquí…</translation>
     </message>
     <message>
-        <location filename="../timeline_view.py" line="358"/>
+        <location filename="../timeline_view.py" line="385"/>
         <source>Ouvrez un fichier CSV (Ctrl+O)</source>
         <translation>Abra un archivo CSV (Ctrl+O)</translation>
     </message>

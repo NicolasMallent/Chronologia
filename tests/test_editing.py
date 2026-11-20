@@ -43,12 +43,13 @@ def test_ajout_modification_suppression_et_annulation(window):
     new = make()
     w.add_event(new)
     assert titles(w) == ["A", "B", "C", "Nouveau"] and w.view.displayed_count == 4
-    assert not w.document.stack.isClean() and w.windowTitle().endswith("*")
+    assert not w.document.stack.isClean() and w.windowTitle() == "Chronologia *"
 
     edited = make("Renommé", "1951", "1960", "green")  # nouvelle couleur → nouvelle catégorie
     w.replace_event(new, edited)
     assert titles(w)[-1] == "Renommé"
-    assert w._category_entries()[-1][0] == "Législation agricole française"
+    entries = {name: count for name, _color, count in w._category_entries()}
+    assert entries["Législation agricole française"] == 1  # la nouvelle catégorie compte 1
 
     w.remove_event(w.document.events[0])
     assert titles(w) == ["B", "C", "Renommé"] and w.view.displayed_count == 3
@@ -269,3 +270,179 @@ def test_molette_zoome_et_maj_molette_defile(window):
     _wheel(view, -120, Qt.KeyboardModifier.ShiftModifier)
     assert bar.value() > 500 and view._ppy == pytest.approx(before)
     window.hide()
+
+
+def test_nouvel_evenement_ici_prend_la_categorie_de_la_ligne(window):
+    from chronologia.event_dialog import EventDialog
+
+    window.resize(1400, 800)
+    window.show()
+    view = window.view
+    lanes = view._layout.lanes
+    black, red = lanes[0], lanes[1]  # dans l'exemple : noir puis rouge
+    assert view.lane_color_at(0) == ""  # sur l'axe : aucune ligne
+    for lane in (black, red):
+        scene_y = 30 + lane.y + lane.height / 2
+        view_y = view.mapFromScene(0, scene_y).y()
+        assert view.lane_color_at(view_y) == lane.color_hex
+
+    dialog = EventDialog(window._registry, start_hint="1950", color_hint=red.color_hex)
+    assert dialog.color.text() == window._registry.for_color(red.color_hex).color
+    assert dialog.start.text() == "1950"
+    inconnue = EventDialog(window._registry, color_hint="#123456")
+    assert inconnue.color.text() == "#123456"
+    sans = EventDialog(window._registry)
+    assert sans.color.text() == next(iter(window._registry)).color
+    window.hide()
+
+
+def test_categorie_creee_sans_evenement_apparait_dans_la_frise_et_le_panneau(window, monkeypatch):
+    from chronologia import main_window
+    from chronologia.categories import CategoryRegistry
+
+    monkeypatch.setattr(main_window, "save_registry", lambda reg: None)
+    registry = CategoryRegistry(list(window._registry))
+    registry.add("Nouvelle catégorie", "#123456")
+    window.apply_registry(registry)
+    panel = [entry for entry in window._category_entries() if entry[0] == "Nouvelle catégorie"]
+    assert panel == [("Nouvelle catégorie", "#123456", 0)]
+    assert "Nouvelle catégorie" in window.filters.visible_categories()
+    assert "Nouvelle catégorie" in [lane.name for lane in window.view._layout.lanes]
+
+
+def test_titre_sans_nom_de_fichier(window):
+    assert window.windowTitle() == "Chronologia"  # fichier "t.csv" ouvert, mais pas dans le titre
+
+
+def _recolor_through_dialog(monkeypatch, registry, old_name, new_color):
+    """Modifie la couleur de la catégorie ``old_name`` comme le ferait l'utilisateur."""
+    from chronologia import categories_dialog
+    from chronologia.categories_dialog import CategoriesDialog
+
+    dialog = CategoriesDialog(registry)
+    names = [c.name for c in dialog.registry()]
+    dialog._list.setCurrentRow(names.index(old_name))
+
+    class FakeEdit:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def exec(self):
+            return True
+
+        def values(self):
+            return old_name, new_color
+
+    monkeypatch.setattr(categories_dialog, "CategoryEditDialog", FakeEdit)
+    dialog._edit()
+    return dialog
+
+
+def test_changer_la_couleur_d_une_categorie_recolore_ses_evenements(window, monkeypatch):
+    from chronologia import main_window
+
+    monkeypatch.setattr(main_window, "save_registry", lambda reg: None)
+    before = window.view.displayed_count
+    red_before = [e.title for e in window.document.events if e.color == "red"]
+    assert red_before  # « A » et « C » sont rouges
+    old_name = window._registry.for_color("red").name
+
+    dialog = _recolor_through_dialog(monkeypatch, window._registry, old_name, "#7c3aed")
+    assert dialog.color_changes() == {"#ff0000": "#7c3aed"}
+    window.apply_registry(dialog.registry(), dialog.color_changes())
+
+    assert window.view.displayed_count == before  # rien ne disparaît
+    assert [e.title for e in window.document.events if e.color == "#7c3aed"] == red_before
+    lane_names = [lane.name for lane in window.view._layout.lanes]
+    assert old_name in lane_names and "#ff0000" not in lane_names
+    assert old_name in window.filters.visible_categories()
+    entries = {name: count for name, _color, count in window._category_entries()}
+    assert entries[old_name] == len(red_before)
+
+    # un seul « annuler » rend aux événements leur ancienne couleur
+    window.document.stack.undo()
+    assert [e.title for e in window.document.events if e.color == "red"] == red_before
+
+
+def test_aucun_changement_de_couleur_si_seul_le_nom_change(window, monkeypatch):
+    from chronologia.categories_dialog import CategoriesDialog
+
+    dialog = CategoriesDialog(window._registry)
+    assert dialog.color_changes() == {}
+    count = window.document.stack.count()
+    window.apply_registry(dialog.registry(), dialog.color_changes())
+    assert window.document.stack.count() == count
+
+
+def _fake_edit_dialog(monkeypatch, name, color, accepted=True):
+    from chronologia import main_window
+
+    seen = {}
+
+    class FakeEdit:
+        def __init__(self, registry, category=None, parent=None, color=""):
+            seen["category"], seen["color"] = category, color
+
+        def exec(self):
+            return accepted
+
+        def values(self):
+            return name, color
+
+    monkeypatch.setattr(main_window, "CategoryEditDialog", FakeEdit)
+    monkeypatch.setattr(main_window, "save_registry", lambda reg: None)
+    return seen
+
+
+def test_clic_droit_sur_une_categorie_propose_de_la_modifier(window, monkeypatch):
+    from PySide6.QtCore import Qt
+
+    _fake_edit_dialog(monkeypatch, "X", "#000001", accepted=False)  # la fenêtre ouvre le dialogue
+
+    panel = window.filters
+    received = []
+    panel.editRequested.connect(received.append)
+    item = panel._list.item(1)
+    assert item is not None
+    panel.editRequested.emit(item.data(Qt.ItemDataRole.UserRole))  # ce que déclenche le menu
+    assert received == [item.data(Qt.ItemDataRole.UserRole)]
+    assert panel._list.contextMenuPolicy() == Qt.ContextMenuPolicy.CustomContextMenu
+
+
+def test_modifier_une_categorie_depuis_le_panneau_renomme_et_recolore(window, monkeypatch):
+    old = window._registry.for_color("red")
+    seen = _fake_edit_dialog(monkeypatch, "Rouge renommé", "#7c3aed")
+    window.edit_category(old.name)
+    assert seen["category"].name == old.name
+    assert window._registry.by_name("Rouge renommé").color == "#7c3aed"
+    assert window._registry.by_name(old.name) is None
+    assert [e.title for e in window.document.events if e.color == "#7c3aed"] == ["A", "C"]
+    entries = {n: c for n, _col, c in window._category_entries()}
+    assert entries["Rouge renommé"] == 2
+    assert window.view.displayed_count == 3
+
+
+def test_renommer_une_categorie_depuis_le_panneau_garde_les_couleurs(window, monkeypatch):
+    old = window._registry.for_color("red")
+    _fake_edit_dialog(monkeypatch, "Autre nom", old.color)
+    count = window.document.stack.count()
+    window.edit_category(old.name)
+    assert window._registry.by_name("Autre nom") is not None
+    assert window.document.stack.count() == count  # aucun événement modifié
+
+
+def test_annuler_le_dialogue_ne_change_rien(window, monkeypatch):
+    old = window._registry.for_color("red")
+    _fake_edit_dialog(monkeypatch, "X", "#000001", accepted=False)
+    registry = window._registry
+    window.edit_category(old.name)
+    assert window._registry is registry
+
+
+def test_couleur_sans_categorie_proposee_a_l_ajout(window, monkeypatch):
+    window.add_event(make("Violet", color="purple"))
+    seen = _fake_edit_dialog(monkeypatch, "Ma catégorie", "purple")
+    window.edit_category("#800080")  # nom implicite de la couleur « purple »
+    assert seen["category"] is None and seen["color"] == "#800080"
+    assert window._registry.by_name("Ma catégorie") is not None
+    assert [n for n, _c, count in window._category_entries() if count and n == "Ma catégorie"]

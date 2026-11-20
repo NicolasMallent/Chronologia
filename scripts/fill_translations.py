@@ -67,6 +67,10 @@ UNSEEN_ES = (
 T: dict[str, tuple[str, str]] = {
     "Ajouter un événement": ("Add an event", "Añadir un evento"),
     "Modifier un événement": ("Edit an event", "Modificar un evento"),
+    "Changer la couleur d'une catégorie": (
+        "Change a category color",
+        "Cambiar el color de una categoría",
+    ),
     "Supprimer un événement": ("Delete an event", "Eliminar un evento"),
     "Modifier l'événement": ("Edit event", "Modificar el evento"),
     "Nouvel événement": ("New event", "Nuevo evento"),
@@ -186,7 +190,6 @@ T: dict[str, tuple[str, str]] = {
         "Save changes before continuing?",
         "¿Guardar los cambios antes de continuar?",
     ),
-    "Sans titre": ("Untitled", "Sin título"),
     "Import terminé avec des anomalies": (
         "Import completed with issues",
         "Importación terminada con incidencias",
@@ -237,6 +240,7 @@ T: dict[str, tuple[str, str]] = {
     "Ouvrez un fichier CSV (Ctrl+O)": ("Open a CSV file (Ctrl+O)", "Abra un archivo CSV (Ctrl+O)"),
     "Nom": ("Name", "Nombre"),
     "Modifier la catégorie": ("Edit category", "Modificar la categoría"),
+    "Modifier la catégorie…": ("Edit category…", "Modificar la categoría…"),
     "Nouvelle catégorie": ("New category", "Nueva categoría"),
     "Gérer les catégories": ("Manage categories", "Gestionar categorías"),
     "&Gérer les catégories…": ("&Manage categories…", "&Gestionar categorías…"),

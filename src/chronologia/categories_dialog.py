@@ -35,6 +35,7 @@ class CategoryEditDialog(QDialog):
         registry: CategoryRegistry,
         category: Category | None = None,
         parent: QWidget | None = None,
+        color: str = "",
     ) -> None:
         super().__init__(parent)
         self._registry = registry
@@ -44,7 +45,7 @@ class CategoryEditDialog(QDialog):
         )
         self.setMinimumWidth(400)
         self.name = QLineEdit(category.name if category else "")
-        self.color = QLineEdit(category.color if category else "")
+        self.color = QLineEdit(category.color if category else color)
         self.color.setPlaceholderText(self.tr("red ou #FF0000"))
         self._swatch = QLabel()
         self._swatch.setFixedSize(22, 22)
@@ -110,6 +111,8 @@ class CategoriesDialog(QDialog):
     def __init__(self, registry: CategoryRegistry, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._work = CategoryRegistry(list(registry))
+        # (catégorie d'origine, catégorie actuelle) : pour répercuter les changements de couleur
+        self._lineage = [[origin, current] for origin, current in zip(registry, self._work)]
         self.setWindowTitle(self.tr("Gérer les catégories"))
         self.resize(460, 420)
 
@@ -160,6 +163,17 @@ class CategoriesDialog(QDialog):
     def registry(self) -> CategoryRegistry:
         return self._work
 
+    def color_changes(self) -> dict[str, str]:
+        """Couleur ``#rrggbb`` d'origine → nouvelle couleur, pour les catégories recolorées.
+
+        Les événements d'une catégorie doivent suivre sa couleur (la couleur *est* la catégorie).
+        """
+        return {
+            origin.color_hex: current.color
+            for origin, current in self._lineage
+            if origin.color_hex != current.color_hex
+        }
+
     def _selected(self) -> Category | None:
         item = self._list.currentItem()
         return item.data(Qt.ItemDataRole.UserRole) if item else None
@@ -205,6 +219,9 @@ class CategoriesDialog(QDialog):
             except CategoryError as exc:
                 QMessageBox.warning(self, self.windowTitle(), plain(category_error_text(exc)))
                 return
+            for pair in self._lineage:
+                if pair[1] is category:
+                    pair[1] = updated
             self._refresh(updated)
 
     def _remove_category(self) -> None:
@@ -218,6 +235,7 @@ class CategoriesDialog(QDialog):
         )
         if answer == QMessageBox.StandardButton.Yes:
             self._work.remove(category)
+            self._lineage = [pair for pair in self._lineage if pair[1] is not category]
             self._refresh()
 
     def _move(self, offset: int) -> None:
@@ -234,4 +252,5 @@ class CategoriesDialog(QDialog):
         )
         if answer == QMessageBox.StandardButton.Yes:
             self._work = default_registry()
+            self._lineage = []  # remplacement complet : les événements ne sont pas recolorés
             self._refresh()

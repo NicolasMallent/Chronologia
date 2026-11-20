@@ -36,6 +36,7 @@ class EventDialog(QDialog):
         registry: CategoryRegistry,
         event: Event | None = None,
         start_hint: str = "",
+        color_hint: str = "",
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
@@ -108,8 +109,12 @@ class EventDialog(QDialog):
             self.source.setPlainText(event.source)
         else:
             self.start.setText(start_hint)
-            first = next(iter(registry), None)
-            self.color.setText(first.color if first else "grey")
+            if color_hint:  # ligne cliquée : sa catégorie, ou à défaut sa couleur
+                found = registry.for_color(color_hint)
+                self.color.setText(found.color if found else color_hint)
+            else:
+                first = next(iter(registry), None)
+                self.color.setText(first.color if first else "grey")
 
         for edit in (self.title, self.start, self.end, self.color):
             edit.textChanged.connect(self._validate)

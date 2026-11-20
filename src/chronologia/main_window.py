@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import Counter
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QKeySequence
 from PySide6.QtWidgets import (
     QDockWidget,
@@ -14,18 +14,22 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QMessageBox,
+    QSizePolicy,
     QToolBar,
+    QToolButton,
+    QWidget,
 )
 
-from .categories import load_registry, save_registry
-from .categories_dialog import CategoriesDialog
+from .categories import CategoryError, CategoryRegistry, load_registry, save_registry
+from .categories_dialog import CategoriesDialog, CategoryEditDialog
 from .csv_io import CsvFormatError, read_events, write_events
 from .document import Document
 from .event_dialog import EventDialog
 from .export_dialog import ExportDialog
 from .filter_panel import FilterPanel
 from .i18n import LANGUAGES, effective_language, save_language
-from .messages import format_error_text, issue_text
+from .icons import make_icon
+from .messages import category_error_text, format_error_text, issue_text
 from .model import Event
 from .pdf_export import write_pdf
 from .textutil import plain
@@ -53,6 +57,7 @@ class MainWindow(QMainWindow):
         dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
         self.filters.visibleChanged.connect(self.view.set_visible_categories)
+        self.filters.editRequested.connect(self.edit_category)
 
         self._status = QLabel()
         self.statusBar().addPermanentWidget(self._status)
@@ -100,10 +105,10 @@ class MainWindow(QMainWindow):
         new_action = QAction(self.tr("&Nouvel événement…"), self)
         new_action.setShortcut(QKeySequence.StandardKey.New)
         new_action.triggered.connect(lambda: self.new_event())
-        self.undo_action = QAction(self.tr("Annuler"), self)
+        self.undo_action = QAction(make_icon("undo"), self.tr("Annuler"), self)
         self.undo_action.setShortcut(QKeySequence.StandardKey.Undo)
         self.undo_action.triggered.connect(self.document.stack.undo)
-        self.redo_action = QAction(self.tr("Rétablir"), self)
+        self.redo_action = QAction(make_icon("redo"), self.tr("Rétablir"), self)
         self.redo_action.setShortcut(QKeySequence.StandardKey.Redo)
         self.redo_action.triggered.connect(self.document.stack.redo)
         stack = self.document.stack
@@ -120,30 +125,48 @@ class MainWindow(QMainWindow):
         edit_menu.addSeparator()
         edit_menu.addAction(categories_action)
 
-        zoom_in = QAction(self.tr("Zoom +"), self)
+        zoom_in = QAction(make_icon("zoom_in"), self.tr("Zoom +"), self)
         zoom_in.setShortcut(QKeySequence.StandardKey.ZoomIn)
         zoom_in.triggered.connect(lambda: self.view.zoom_by(1.25))
-        zoom_out = QAction(self.tr("Zoom −"), self)
+        zoom_out = QAction(make_icon("zoom_out"), self.tr("Zoom −"), self)
         zoom_out.setShortcut(QKeySequence.StandardKey.ZoomOut)
         zoom_out.triggered.connect(lambda: self.view.zoom_by(1 / 1.25))
-        fit = QAction(self.tr("Ajuster"), self)
+        fit = QAction(make_icon("fit"), self.tr("Ajuster"), self)
         fit.setShortcut("Ctrl+0")
         fit.triggered.connect(self.view.fit_width)
 
         self.search = QLineEdit()
         self.search.setPlaceholderText(self.tr("Rechercher un événement…"))
         self.search.setClearButtonEnabled(True)
-        self.search.setMaximumWidth(320)
+        self.search.setFixedWidth(300)
+        self.search.addAction(
+            make_icon("search", "#8b91a1"), QLineEdit.ActionPosition.LeadingPosition
+        )
         self.search.textChanged.connect(self.view.set_search)
+
+        tool_new = QAction(
+            make_icon("plus", "#ffffff", "#ffffff"), self.tr("Nouvel événement"), self
+        )
+        tool_new.triggered.connect(lambda: self.new_event())
 
         bar = QToolBar(self.tr("Outils"))
         bar.setMovable(False)
+        bar.setIconSize(QSize(20, 20))
+        bar.addAction(tool_new)
+        button = bar.widgetForAction(tool_new)
+        if isinstance(button, QToolButton):
+            button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+            button.setProperty("primary", True)
+            button.setCursor(Qt.CursorShape.PointingHandCursor)
+        bar.addSeparator()
         for action in (self.undo_action, self.redo_action):
             bar.addAction(action)
         bar.addSeparator()
         for action in (zoom_in, zoom_out, fit):
             bar.addAction(action)
-        bar.addSeparator()
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        bar.addWidget(spacer)
         bar.addWidget(self.search)
         self.addToolBar(bar)
 
@@ -186,8 +209,10 @@ class MainWindow(QMainWindow):
 
     # --- édition des événements ------------------------------------------------------
 
-    def new_event(self, start_hint: str = "") -> None:
-        dialog = EventDialog(self._registry, start_hint=start_hint, parent=self)
+    def new_event(self, start_hint: str = "", color_hint: str = "") -> None:
+        dialog = EventDialog(
+            self._registry, start_hint=start_hint, color_hint=color_hint, parent=self
+        )
         if dialog.exec() and (event := dialog.result_event()) is not None:
             self.add_event(event)
 
@@ -211,13 +236,47 @@ class MainWindow(QMainWindow):
     def manage_categories(self) -> None:
         dialog = CategoriesDialog(self._registry, parent=self)
         if dialog.exec():
-            self.apply_registry(dialog.registry())
+            self.apply_registry(dialog.registry(), dialog.color_changes())
 
-    def apply_registry(self, registry) -> None:
-        """Adopte de nouvelles catégories, les enregistre et rafraîchit l'affichage."""
+    def edit_category(self, name: str) -> None:
+        """Modifie une catégorie (clic droit dans le panneau) : nom et couleur.
+
+        Une couleur sans catégorie (nommée par son code) est proposée à l'ajout.
+        """
+        work = CategoryRegistry(list(self._registry))
+        category = work.by_name(name)
+        if category is None:  # couleur d'événements sans catégorie : on la crée
+            dialog = CategoryEditDialog(work, parent=self, color=name)
+        else:
+            dialog = CategoryEditDialog(work, category, parent=self)
+        if not dialog.exec():
+            return
+        try:
+            if category is None:
+                work.add(*dialog.values())
+                changes: dict[str, str] = {}
+            else:
+                updated = work.update(category, *dialog.values())
+                changes = (
+                    {category.color_hex: updated.color}
+                    if category.color_hex != updated.color_hex
+                    else {}
+                )
+        except CategoryError as exc:
+            QMessageBox.warning(self, self.tr("Catégories"), plain(category_error_text(exc)))
+            return
+        self.apply_registry(work, changes)
+
+    def apply_registry(self, registry, color_changes: dict[str, str] | None = None) -> None:
+        """Adopte de nouvelles catégories, les enregistre et rafraîchit l'affichage.
+
+        ``color_changes`` : couleurs de catégories modifiées ; les événements concernés prennent
+        la nouvelle couleur (annulable), car la couleur d'un événement est sa catégorie.
+        """
         self._registry = registry
         self.view.set_registry(registry)
-        self.filters.set_categories(self._category_entries(), keep_state=True)
+        if not (color_changes and self.document.recolor(color_changes)):
+            self.filters.set_categories(self._category_entries(), keep_state=True)
         try:
             save_registry(registry)
         except OSError as exc:
@@ -366,22 +425,23 @@ class MainWindow(QMainWindow):
             event.ignore()
 
     def _update_title(self, *_: object) -> None:
-        name = self._path.name if self._path else self.tr("Sans titre")
+        # pas de nom de fichier dans le titre ; l'astérisque signale des modifications non enregistrées
         dirty = "" if self.document.stack.isClean() else " *"
-        self.setWindowTitle(f"Chronologia — {name}{dirty}")
+        self.setWindowTitle(f"Chronologia{dirty}")
 
     def _category_entries(self) -> list[tuple[str, str, int]]:
+        """(nom, couleur, nombre d'événements) : toutes les catégories du registre, même vides."""
         events = self.document.events
         counts = Counter(self._registry.category_name(e) for e in events)
-        colors = {}
+        colors = {c.name: c.color_hex for c in self._registry}
         for event in events:
             found = self._registry.for_color(event.color)
             colors.setdefault(
                 self._registry.category_name(event), found.color_hex if found else event.color_hex
             )
-        order = [c.name for c in self._registry if c.name in counts]
+        order = [c.name for c in self._registry]
         order += sorted((n for n in counts if n not in order), key=lambda n: -counts[n])
-        return [(n, colors[n], counts[n]) for n in order]
+        return [(n, colors[n], counts.get(n, 0)) for n in order]
 
     def _show_issues(self, result) -> None:
         skipped = sum(1 for i in result.issues if i.skipped)
