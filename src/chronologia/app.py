@@ -15,6 +15,7 @@ from .categories import default_registry
 from .main_window import MainWindow
 from .pdf_export import write_pdf
 from .poster import plan_poster
+from .theme import apply_theme
 
 SMOKE_TEST_FLAG = "--smoke-test"
 ICON_PATH = Path(__file__).parent / "resources" / "icon.png"
@@ -53,6 +54,7 @@ def main(argv: list[str] | None = None) -> int:
     args = [a for a in args if a != SMOKE_TEST_FLAG]
     app = QApplication(args)
     app.setApplicationName("Chronologia")
+    apply_theme(app)
     app.setWindowIcon(QIcon(str(ICON_PATH)))
     translators = i18n.install_translators(app, i18n.effective_language())  # noqa: F841
     window = MainWindow()
