@@ -45,6 +45,8 @@ class LayoutOptions:
     max_label_width: float = 1000.0  # largeur max d'un titre placé à côté d'un élément
     min_label_width: float = 30.0  # en dessous, le titre est caché plutôt que réduit à « … »
     max_label_lines: int = 1  # > 1 : un titre trop long passe sur plusieurs lignes (export)
+    extra_sublanes: int = 0  # > 0 : un titre qui ne tient pas fait descendre l'élément sur une
+    # ligne libre de sa catégorie (jusqu'à ce nombre de lignes de plus que le strict nécessaire)
     sublane_spacing: float = 4.0
     lane_spacing: float = 14.0
     min_lane_height: float = 0.0  # ex. : place pour le nom de la catégorie
@@ -257,6 +259,8 @@ class _Draft:
     state: str = LABEL_HIDDEN
     right: float = 0.0  # fin de la forme, puis du titre affiché
     block: float = 0.0  # hauteur du bloc de titre
+    t0: float = 0.0  # instants de début et de fin (années), pour la simultanéité
+    t1: float = 0.0
 
     @property
     def is_point(self) -> bool:
@@ -341,6 +345,113 @@ def _place_label(
         draft.right = max(draft.right, outside_x + max(measure(line) for line in lines))
 
 
+class _TitleWidths:
+    """Largeur minimale pour afficher un titre en entier (sur au plus N lignes).
+
+    Les largeurs de mots sont mises en cache (``cache`` peut être partagé entre plusieurs mises
+    en page : la mesure du texte ne dépend pas de l'échelle), et le retour à la ligne est simulé
+    sur des nombres, sans nouvelle mesure.
+    """
+
+    def __init__(self, measure: TextMeasurer, max_lines: int, cache: dict | None = None) -> None:
+        self._measure = measure
+        self._max_lines = max_lines
+        self._cache = cache if cache is not None else {}
+
+    def _word(self, word: str) -> float:
+        key = ("w", word)
+        if key not in self._cache:
+            self._cache[key] = self._measure(word)
+        return self._cache[key]
+
+    def need(self, title: str) -> float:
+        key = ("n", title, self._max_lines)
+        if key in self._cache:
+            return self._cache[key]
+        single = self._measure(title)
+        result = single
+        words = title.split()
+        if self._max_lines > 1 and len(words) > 1:
+            widths = [self._word(w) for w in words]
+            space = self._word(" ")
+            lo, hi = max(widths), single
+            if lo < hi:
+                if self._lines(widths, space, lo) <= self._max_lines:
+                    result = lo + 1.0
+                else:
+                    for _ in range(10):  # plus petite largeur qui tient sur max_lines lignes
+                        mid = (lo + hi) / 2
+                        if self._lines(widths, space, mid) <= self._max_lines:
+                            hi = mid
+                        else:
+                            lo = mid
+                    result = min(single, hi + 1.0)
+        self._cache[key] = result
+        return result
+
+    @staticmethod
+    def _lines(widths: list[float], space: float, limit: float) -> int:
+        lines, current = 1, widths[0]
+        for w in widths[1:]:
+            if current + space + w <= limit:
+                current += space + w
+            else:
+                lines, current = lines + 1, w
+        return lines
+
+
+def _title_fits(
+    draft: _Draft, limit: float | None, opts: LayoutOptions, widths: _TitleWidths
+) -> bool:
+    """Le titre de ``draft`` peut-il s'afficher en entier si l'élément suivant commence à ``limit`` ?
+
+    Vrai aussi quand rien ne pourrait l'afficher en entier (titre plus long que le maximum) : il
+    est inutile de déplacer l'élément dans ce cas.
+    """
+    need = widths.need(draft.event.title)
+    if need > opts.max_label_width:
+        return True
+    pad = opts.padding
+    if not draft.is_point and (draft.x1 - draft.x0) - 2 * pad >= need:
+        return True  # le titre tient dans la barre
+    shape_right = draft.x0 + opts.point_width / 2 if draft.is_point else draft.x1
+    available = opts.max_label_width
+    if limit is not None:
+        available = min(available, limit - opts.gap - (shape_right + pad))
+    return available >= need
+
+
+def _assign_crowded(
+    drafts: list[_Draft], base_count: int, opts: LayoutOptions, widths: _TitleWidths
+) -> None:
+    """Répartit les éléments en sous-lignes : jamais simultanés sur une même ligne (comme
+    ``assign_sublanes``), et un élément ne s'installe pas là où il empêcherait d'afficher en
+    entier le titre du précédent, tant qu'il reste une ligne libre (``extra_sublanes``)."""
+    half = opts.point_width / 2
+    cap = base_count + opts.extra_sublanes
+    last: list[_Draft] = []
+    ends: list[float] = []
+    for d in sorted(drafts, key=lambda d: (d.t0, d.t0 - d.t1, d.x0)):
+        chosen: int | None = None
+        free: list[int] = []  # lignes libres dans le temps, mais qui masqueraient un titre
+        for k, end in enumerate(ends):
+            if d.t0 >= end:
+                if _title_fits(last[k], _shape_left(d, half), opts, widths):
+                    chosen = k
+                    break
+                free.append(k)
+        if chosen is None:
+            if len(ends) < cap or not free:
+                chosen = len(ends)  # nouvelle ligne
+                ends.append(d.t1)
+                last.append(d)
+                d.sublane = chosen
+                continue
+            chosen = free[0]  # plus de ligne disponible : on accepte un titre tronqué
+        ends[chosen], last[chosen] = d.t1, d
+        d.sublane = chosen
+
+
 def compute_layout(
     events: Iterable[Event],
     registry: CategoryRegistry,
@@ -349,6 +460,7 @@ def compute_layout(
     visible_categories: set[str] | None = None,
     time_range: tuple[float, float] | None = None,
     include_empty: bool = False,
+    label_cache: dict | None = None,
 ) -> Layout:
     """Calcule la frise.
 
@@ -356,8 +468,10 @@ def compute_layout(
     ``include_empty`` : affiche aussi les catégories du registre sans événement (ligne vide) ;
     l'écran le demande pour qu'une catégorie qu'on vient de créer soit visible, pas l'export.
     ``time_range`` : (début, fin) en années ; seuls les événements qui l'intersectent sont gardés.
+    ``label_cache`` : dictionnaire réutilisable d'une mise en page à l'autre (largeurs de titres).
     """
     opts = options or LayoutOptions()
+    widths = _TitleWidths(measure, opts.max_label_lines, label_cache)
     all_events = list(events)
     selected: list[tuple[str, str, Event]] = []
     for event in all_events:
@@ -421,9 +535,12 @@ def compute_layout(
                     x0, x1 = max(x0, 0.0), min(x1, x_limit)
                 x1 = max(x1, x0 + opts.marker_size)
                 right = x1
-            drafts.append(_Draft(event, x0, x1, sub, row_h, right=right))
+            t_start, t_end = _span(event)
+            drafts.append(_Draft(event, x0, x1, sub, row_h, right=right, t0=t_start, t1=t_end))
 
-        n_sub = max(sublanes, default=0) + 1  # une catégorie vide garde une ligne
+        if opts.extra_sublanes > 0 and drafts:
+            _assign_crowded(drafts, max(sublanes) + 1, opts, widths)
+        n_sub = max((d.sublane for d in drafts), default=0) + 1  # une catégorie vide a une ligne
         for k in range(n_sub):
             row = sorted((d for d in drafts if d.sublane == k), key=lambda d: d.x0)
             for i, draft in enumerate(row):

@@ -40,29 +40,17 @@ LINES_ES = (
     "(hasta este número): se muestran más títulos completos, "
     "pero las filas de la cronología son más altas."
 )
-STRETCH_FR = (
-    "La frise est étirée tant que le texte reste au moins de cette taille : "
-    "plus la page est grande, plus de titres s'affichent en entier."
-)
-STRETCH_EN = (
-    "The timeline is stretched as long as the text stays at least this size: "
-    "the larger the page, the more titles are shown in full."
-)
-STRETCH_ES = (
-    "La cronología se estira mientras el texto no sea menor que este tamaño: "
-    "cuanto mayor es la página, más títulos se muestran completos."
-)
 UNSEEN_FR = (
     "%1 titres tronqués ou masqués : choisissez une page plus grande "
-    "ou réduisez la taille minimale du texte pour en afficher davantage."
+    "ou réduisez la taille du texte pour en afficher davantage."
 )
 UNSEEN_EN = (
     "%1 titles truncated or hidden: choose a larger page "
-    "or reduce the minimum text size to show more of them."
+    "or reduce the text size to show more of them."
 )
 UNSEEN_ES = (
     "%1 títulos recortados u ocultos: elija una página mayor "
-    "o reduzca el tamaño mínimo del texto para mostrar más."
+    "o reduzca el tamaño del texto para mostrar más."
 )
 FIXED_FR = (
     "Touches fixes : Suppr supprime l'événement sélectionné, Échap le désélectionne, "
@@ -76,6 +64,45 @@ FIXED_ES = (
     "Teclas fijas: Supr elimina el evento seleccionado, Esc lo deselecciona, "
     "rueda = zoom, Mayús + rueda = desplazamiento vertical."
 )
+SIZE_FR = (
+    "Taille du texte sur la feuille. La frise s'élargit quand le texte est plus petit : "
+    "plus de titres s'affichent en entier."
+)
+SIZE_EN = (
+    "Text size on the sheet. The timeline gets wider when the text is smaller: "
+    "more titles are shown in full."
+)
+SIZE_ES = (
+    "Tamaño del texto en la hoja. La cronología se ensancha cuando el texto es más pequeño: "
+    "se muestran más títulos completos."
+)
+REDUCED_FR = (
+    "Texte réduit à %1 pt (au lieu de %2 pt) pour que la frise tienne dans la "
+    "hauteur de la page : choisissez une page plus haute ou un texte plus petit."
+)
+REDUCED_EN = (
+    "Text reduced to %1 pt (instead of %2 pt) so that the timeline fits the "
+    "page height: choose a taller page or smaller text."
+)
+REDUCED_ES = (
+    "Texto reducido a %1 pt (en lugar de %2 pt) para que la cronología quepa en la "
+    "altura de la página: elija una página más alta o un texto más pequeño."
+)
+LIMIT_FR = (
+    "Au-delà de 5 m, certains lecteurs PDF refusent la page : le PDF sera exporté "
+    "à l'échelle 1/%1 (vectoriel, sans perte). Imprimez-le à %2 %."
+)
+LIMIT_EN = (
+    "Beyond 5 m, some PDF readers refuse the page: the PDF will be exported "
+    "at 1/%1 scale (vector, lossless). Print it at %2 %."
+)
+LIMIT_ES = (
+    "Por encima de 5 m, algunos lectores PDF rechazan la página: el PDF se exportará "
+    "a escala 1/%1 (vectorial, sin pérdida). Imprímalo al %2 %."
+)
+SETUP_FR = "Réglez la feuille (format, titre…), puis exportez-la en PDF."
+SETUP_EN = "Set up the sheet (format, title…), then export it as PDF."
+SETUP_ES = "Configure la hoja (formato, título…) y expórtela a PDF."
 T: dict[str, tuple[str, str]] = {
     "Ajouter un événement": ("Add an event", "Añadir un evento"),
     "Modifier un événement": ("Edit an event", "Modificar un evento"),
@@ -305,7 +332,9 @@ T: dict[str, tuple[str, str]] = {
         "%1 titles hidden (zoom in to see them)",
         "%1 títulos ocultos (acerque para verlos)",
     ),
-    "Taille minimale du texte": ("Minimum text size", "Tamaño mínimo del texto"),
+    "Taille du texte": ("Text size", "Tamaño del texto"),
+    SIZE_FR: (SIZE_EN, SIZE_ES),
+    REDUCED_FR: (REDUCED_EN, REDUCED_ES),
     "&Préférences…": ("&Preferences…", "&Preferencias…"),
     "Préférences": ("Preferences", "Preferencias"),
     "Général": ("General", "General"),
@@ -324,9 +353,66 @@ T: dict[str, tuple[str, str]] = {
         "El nuevo idioma se aplica en el próximo inicio de la aplicación.",
     ),
     FIXED_FR: (FIXED_EN, FIXED_ES),
+    "Le nom du format est vide ou trop long.": (
+        "The format name is empty or too long.",
+        "El nombre del formato está vacío o es demasiado largo.",
+    ),
+    "Un format porte déjà ce nom.": (
+        "A format already has this name.",
+        "Ya existe un formato con este nombre.",
+    ),
+    "Les dimensions doivent être comprises entre 5 cm et 20 m.": (
+        "Dimensions must be between 5 cm and 20 m.",
+        "Las dimensiones deben estar entre 5 cm y 20 m.",
+    ),
+    "Trop de formats enregistrés.": ("Too many saved formats.", "Demasiados formatos guardados."),
+    "Feuille": ("Sheet", "Hoja"),
+    "Libre": ("Free", "Libre"),
+    "Frise libre : le zoom dévoile les titres": (
+        "Free timeline: zooming reveals the titles",
+        "Cronología libre: el zoom revela los títulos",
+    ),
+    "Feuille : la frise au format d'impression": (
+        "Sheet: the timeline at print size",
+        "Hoja: la cronología al tamaño de impresión",
+    ),
+    "Mode Libre": ("Free mode", "Modo libre"),
+    "Mode Feuille": ("Sheet mode", "Modo hoja"),
+    "Largeur de la feuille": ("Sheet width", "Ancho de la hoja"),
+    "Hauteur de la feuille": ("Sheet height", "Alto de la hoja"),
+    "Taille réelle (100 %)": ("Actual size (100 %)", "Tamaño real (100 %)"),
+    "Règles": ("Rulers", "Reglas"),
+    "Mini-carte": ("Mini-map", "Minimapa"),
+    "Formats": ("Formats", "Formatos"),
+    "Formats personnalisés illisibles, ignorés : %1": (
+        "Unreadable custom formats, ignored: %1",
+        "Formatos personalizados ilegibles, ignorados: %1",
+    ),
+    "Format appliqué mais non enregistré : %1": (
+        "Format applied but not saved: %1",
+        "Formato aplicado pero no guardado: %1",
+    ),
+    SETUP_FR: (SETUP_EN, SETUP_ES),
+    "à imprimer à %1 %": ("print at %1 %", "imprimir al %1 %"),
+    "texte %1 pt": ("text %1 pt", "texto %1 pt"),
+    "%1 titres complets, %2 tronqués, %3 masqués": (
+        "%1 titles complete, %2 truncated, %3 hidden",
+        "%1 títulos completos, %2 recortados, %3 ocultos",
+    ),
+    "Enregistrer ce format…": ("Save this format…", "Guardar este formato…"),
+    "Supprimer ce format": ("Delete this format", "Eliminar este formato"),
+    "Exporter en PDF…": ("Export to PDF…", "Exportar a PDF…"),
+    "Enregistrer ce format": ("Save this format", "Guardar este formato"),
+    "Nom du format :": ("Format name:", "Nombre del formato:"),
+    "Supprimer le format « %1 » ?": ("Delete format “%1”?", "¿Eliminar el formato «%1»?"),
+    "Aucun événement à afficher avec les filtres actuels.": (
+        "No events to display with the current filters.",
+        "Ningún evento que mostrar con los filtros actuales.",
+    ),
+    "Aucun événement à afficher": ("No events to display", "Ningún evento que mostrar"),
+    LIMIT_FR: (LIMIT_EN, LIMIT_ES),
     "Lignes maximum par titre": ("Maximum lines per title", "Líneas máximas por título"),
     LINES_FR: (LINES_EN, LINES_ES),
-    STRETCH_FR: (STRETCH_EN, STRETCH_ES),
     UNSEEN_FR: (UNSEEN_EN, UNSEEN_ES),
 }
 

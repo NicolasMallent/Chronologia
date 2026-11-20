@@ -5,13 +5,15 @@ from __future__ import annotations
 from collections import Counter
 from pathlib import Path
 
-from PySide6.QtCore import QMimeData, QSize, Qt, QTimer
+from PySide6.QtCore import QMimeData, QSettings, QSize, Qt, QTimer
 from PySide6.QtGui import (
     QAction,
+    QActionGroup,
     QCloseEvent,
     QDragEnterEvent,
     QDragMoveEvent,
     QDropEvent,
+    QGuiApplication,
     QKeySequence,
 )
 from PySide6.QtWidgets import (
@@ -21,7 +23,9 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QMessageBox,
+    QScrollArea,
     QSizePolicy,
+    QStackedWidget,
     QToolBar,
     QToolButton,
     QWidget,
@@ -32,12 +36,15 @@ from .categories_dialog import CategoriesDialog, CategoryEditDialog
 from .csv_io import CsvFormatError, read_events, write_events
 from .document import Document
 from .event_dialog import EventDialog
-from .export_dialog import ExportDialog
 from .filter_panel import FilterPanel
+from .formats import load_formats, save_formats
 from .i18n import effective_language, save_language
 from .icons import make_icon
 from .messages import category_error_text, format_error_text, issue_text
 from .model import Event
+from .page_controller import PageController
+from .page_panel import PagePanel
+from .page_view import PageContainer
 from .pdf_export import write_pdf
 from .preferences_dialog import PreferencesDialog
 from .shortcuts import ShortcutManager
@@ -45,22 +52,33 @@ from .textutil import plain
 from .timeline_view import TimelineView
 
 MAX_ISSUES_SHOWN = 200
+PAGE_DOCK_WIDTH = 350  # largeur initiale du panneau Feuille
+PAGE_DOCK_MIN_WIDTH = (
+    330  # en dessous, ses champs seraient coupés : le volet ne peut pas être plus étroit
+)
 
 
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.resize(1400, 800)
+        self.resize(self._initial_size())
 
         self._registry, warning = load_registry()
         self.document = Document(self)
         self._path: Path | None = None
         self._lossy = False  # l'import a ignoré des lignes : ne pas écraser le fichier d'origine
 
-        self.view = TimelineView()
-        self.setCentralWidget(self.view)
+        self.view = TimelineView()  # mode Libre
+        self.page_container = PageContainer()  # mode Feuille
+        self.page_view = self.page_container.view
+        self._stack = QStackedWidget()
+        self._stack.addWidget(self.view)
+        self._stack.addWidget(self.page_container)
+        self.setCentralWidget(self._stack)
+        self._page_mode = False
+        self._reveal_in_page: Event | None = None
         self.setAcceptDrops(True)  # glisser-déposer d'un CSV n'importe où dans la fenêtre
-        self._drop_overlay = QLabel(self.tr("Déposez un fichier CSV pour l'ouvrir"), self.view)
+        self._drop_overlay = QLabel(self.tr("Déposez un fichier CSV pour l'ouvrir"), self._stack)
         self._drop_overlay.setObjectName("dropOverlay")
         self._drop_overlay.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._drop_overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -72,7 +90,30 @@ class MainWindow(QMainWindow):
         dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
         self.filters.visibleChanged.connect(self.view.set_visible_categories)
+        self.filters.visibleChanged.connect(lambda _names: self._push_page_data())
         self.filters.editRequested.connect(self.edit_category)
+
+        formats, formats_warning = load_formats()
+        self.page_panel = PagePanel(formats)
+        self.page = PageController(self.page_panel, self)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setMinimumWidth(PAGE_DOCK_MIN_WIDTH)
+        scroll.setWidget(self.page_panel)
+        self._page_dock = QDockWidget(self.tr("Feuille"), self)
+        self._page_dock.setWidget(scroll)
+        self._page_dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._page_dock)
+        self._page_dock.hide()
+        self.resizeDocks([self._page_dock], [PAGE_DOCK_WIDTH], Qt.Orientation.Horizontal)
+        self.page.planChanged.connect(self._on_plan_changed)
+        self.page_panel.exportRequested.connect(self.export_pdf)
+        self.page_panel.formatsChanged.connect(self._save_formats)
+        self.page_view.editRequested.connect(self.edit_event)
+        self.page_view.deleteRequested.connect(self.delete_event)
+        self.page_view.newRequested.connect(self.new_event)
 
         self._status = QLabel()
         self.statusBar().addPermanentWidget(self._status)
@@ -85,6 +126,14 @@ class MainWindow(QMainWindow):
 
         self._build_actions()
         self._update_title()
+        self.set_mode(QSettings("Chronologia", "Chronologia").value("view/mode") == "page")
+        if formats_warning:
+            self.statusBar().showMessage(
+                self.tr("Formats personnalisés illisibles, ignorés : %1").replace(
+                    "%1", formats_warning
+                ),
+                10000,
+            )
         if warning:
             self.statusBar().showMessage(
                 self.tr(
@@ -92,6 +141,15 @@ class MainWindow(QMainWindow):
                 ).replace("%1", warning),
                 10000,
             )
+
+    @staticmethod
+    def _initial_size() -> QSize:
+        """1400 × 800, sans dépasser l'écran (un panneau ne doit pas sortir de l'écran)."""
+        screen = QGuiApplication.primaryScreen()
+        if screen is None:
+            return QSize(1400, 800)
+        area = screen.availableGeometry()
+        return QSize(min(1400, int(area.width() * 0.94)), min(800, int(area.height() * 0.92)))
 
     # --- actions ---------------------------------------------------------------------
 
@@ -150,13 +208,13 @@ class MainWindow(QMainWindow):
 
         zoom_in = QAction(make_icon("zoom_in"), self.tr("Zoom +"), self)
         reg("zoom_in", zoom_in, QKeySequence.StandardKey.ZoomIn)
-        zoom_in.triggered.connect(lambda: self.view.zoom_by(1.25))
+        zoom_in.triggered.connect(lambda: self._zoom_by(1.25))
         zoom_out = QAction(make_icon("zoom_out"), self.tr("Zoom −"), self)
         reg("zoom_out", zoom_out, QKeySequence.StandardKey.ZoomOut)
-        zoom_out.triggered.connect(lambda: self.view.zoom_by(1 / 1.25))
+        zoom_out.triggered.connect(lambda: self._zoom_by(1 / 1.25))
         fit = QAction(make_icon("fit"), self.tr("Ajuster"), self)
         reg("fit", fit, "Ctrl+0")
-        fit.triggered.connect(self.view.fit_width)
+        fit.triggered.connect(self._fit)
 
         self.search = QLineEdit()
         self.search.setPlaceholderText(self.tr("Rechercher un événement…"))
@@ -166,7 +224,54 @@ class MainWindow(QMainWindow):
             make_icon("search", "#8b91a1"), QLineEdit.ActionPosition.LeadingPosition
         )
         self.search.textChanged.connect(self.view.set_search)
+        self.search.textChanged.connect(self.page_view.set_search)
         self.search.setAcceptDrops(False)  # un fichier déposé ici ouvre le CSV, pas du texte
+
+        free_action = QAction(self.tr("Libre"), self)
+        free_action.setCheckable(True)
+        free_action.setToolTip(self.tr("Frise libre : le zoom dévoile les titres"))
+        page_action = QAction(self.tr("Feuille"), self)
+        page_action.setCheckable(True)
+        page_action.setToolTip(self.tr("Feuille : la frise au format d'impression"))
+        self._mode_group = QActionGroup(self)
+        self._mode_group.setExclusive(True)
+        for action in (free_action, page_action):
+            self._mode_group.addAction(action)
+        self._mode_actions = (free_action, page_action)
+        reg("mode_free", free_action, None, label=self.tr("Mode Libre"))
+        reg("mode_page", page_action, None, label=self.tr("Mode Feuille"))
+        free_action.triggered.connect(lambda: self._mode_chosen(False))
+        page_action.triggered.connect(lambda: self._mode_chosen(True))
+
+        fit_width_page = QAction(self.tr("Largeur de la feuille"), self)
+        reg("fit_width_page", fit_width_page, "Ctrl+1")
+        fit_width_page.triggered.connect(self.page_view.fit_width)
+        fit_height_page = QAction(self.tr("Hauteur de la feuille"), self)
+        reg("fit_height_page", fit_height_page, "Ctrl+2")
+        fit_height_page.triggered.connect(self.page_view.fit_height)
+        actual_size = QAction(self.tr("Taille réelle (100 %)"), self)
+        reg("actual_size", actual_size, "Ctrl+3")
+        actual_size.triggered.connect(self.page_view.actual_size)
+        settings = QSettings("Chronologia", "Chronologia")
+        self._rulers_action = QAction(self.tr("Règles"), self)
+        self._rulers_action.setCheckable(True)
+        self._rulers_action.setChecked(settings.value("page/rulers", True, type=bool))
+        reg("toggle_rulers", self._rulers_action, None)
+        self._rulers_action.toggled.connect(self._toggle_rulers)
+        self._navigator_action = QAction(self.tr("Mini-carte"), self)
+        self._navigator_action.setCheckable(True)
+        self._navigator_action.setChecked(settings.value("page/navigator", True, type=bool))
+        reg("toggle_navigator", self._navigator_action, None)
+        self._navigator_action.toggled.connect(self._toggle_navigator)
+        self._page_only_actions = (
+            fit_width_page,
+            fit_height_page,
+            actual_size,
+            self._rulers_action,
+            self._navigator_action,
+        )
+        self.page_container.set_rulers_visible(self._rulers_action.isChecked())
+        self.page_container.set_navigator_enabled(self._navigator_action.isChecked())
 
         tool_new = QAction(
             make_icon("plus", "#ffffff", "#ffffff"), self.tr("Nouvel événement"), self
@@ -188,6 +293,9 @@ class MainWindow(QMainWindow):
         bar.addSeparator()
         for action in (zoom_in, zoom_out, fit):
             bar.addAction(action)
+        bar.addSeparator()
+        for action in self._mode_actions:
+            bar.addAction(action)
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         bar.addWidget(spacer)
@@ -196,6 +304,15 @@ class MainWindow(QMainWindow):
 
         view_menu = self.menuBar().addMenu(self.tr("&Affichage"))
         for action in (zoom_in, zoom_out, fit):
+            view_menu.addAction(action)
+        view_menu.addSeparator()
+        for action in (fit_width_page, fit_height_page, actual_size):
+            view_menu.addAction(action)
+        view_menu.addSeparator()
+        for action in (self._rulers_action, self._navigator_action):
+            view_menu.addAction(action)
+        view_menu.addSeparator()
+        for action in self._mode_actions:
             view_menu.addAction(action)
 
     def show_preferences(self) -> None:
@@ -223,6 +340,75 @@ class MainWindow(QMainWindow):
         self.redo_action.setText(
             f"{redo_text} : {stack.redoText()}" if stack.canRedo() else redo_text
         )
+
+    # --- modes Libre et Feuille ---------------------------------------------------------
+
+    @property
+    def page_mode(self) -> bool:
+        return self._page_mode
+
+    def set_mode(self, page: bool) -> None:
+        """Affiche la frise libre (``False``) ou la feuille au format d'impression (``True``)."""
+        changed = page != self._page_mode
+        self._page_mode = page
+        self._stack.setCurrentWidget(self.page_container if page else self.view)
+        self._page_dock.setVisible(page)
+        self._mode_actions[1 if page else 0].setChecked(True)
+        for action in self._page_only_actions:
+            action.setEnabled(page)
+        self._push_page_data()
+        self.page.activate(page)
+        if changed:  # la sélection suit d'un mode à l'autre
+            if page:
+                self.page_view.select(self.view.selected_event)
+            else:
+                self.view.select(self.page_view.selected_event)
+        self._update_status()
+
+    def _mode_chosen(self, page: bool) -> None:
+        """Choix de l'utilisateur : le mode est mémorisé pour le prochain démarrage."""
+        self.set_mode(page)
+        settings = QSettings("Chronologia", "Chronologia")
+        settings.setValue("view/mode", "page" if page else "free")
+        settings.sync()
+
+    def _toggle_rulers(self, on: bool) -> None:
+        self.page_container.set_rulers_visible(on)
+        QSettings("Chronologia", "Chronologia").setValue("page/rulers", on)
+
+    def _toggle_navigator(self, on: bool) -> None:
+        self.page_container.set_navigator_enabled(on)
+        QSettings("Chronologia", "Chronologia").setValue("page/navigator", on)
+
+    def _zoom_by(self, factor: float) -> None:
+        (self.page_view if self._page_mode else self.view).zoom_by(factor)
+
+    def _fit(self) -> None:
+        if self._page_mode:
+            self.page_view.fit_page()
+        else:
+            self.view.fit_width()
+
+    def _push_page_data(self) -> None:
+        """Transmet événements, catégories et filtre à la mise en page de la feuille."""
+        self.page.set_data(self.document.events, self._registry, self.view.visible_categories)
+
+    def _on_plan_changed(self, plan) -> None:
+        self.page_view.set_plan(plan)
+        if self._reveal_in_page is not None:
+            self.page_view.reveal(self._reveal_in_page)
+            self._reveal_in_page = None
+        self._update_status()
+
+    def _save_formats(self, formats) -> None:
+        try:
+            save_formats(formats)
+        except OSError as exc:
+            QMessageBox.warning(
+                self,
+                self.tr("Formats"),
+                plain(self.tr("Format appliqué mais non enregistré : %1").replace("%1", str(exc))),
+            )
 
     # --- édition des événements ------------------------------------------------------
 
@@ -292,6 +478,7 @@ class MainWindow(QMainWindow):
         """
         self._registry = registry
         self.view.set_registry(registry)
+        self._push_page_data()
         if not (color_changes and self.document.recolor(color_changes)):
             self.filters.set_categories(self._category_entries(), keep_state=True)
         try:
@@ -326,9 +513,12 @@ class MainWindow(QMainWindow):
         self.view.set_events(self.document.events, rebuild=False)
         self.filters.set_categories(self._category_entries(), keep_state=True)
         self.view.select(focus)  # l'événement ajouté ou modifié est mis en valeur
+        self.page_view.select(focus)
+        self._push_page_data()
         if focus is not None:
             self.filters.ensure_checked(self._registry.category_name(focus))
             self.view.reveal(focus)
+            self._reveal_in_page = focus
 
     # --- fichiers --------------------------------------------------------------------
 
@@ -394,12 +584,22 @@ class MainWindow(QMainWindow):
         return True
 
     def export_pdf(self) -> None:
-        """Exporte la frise affichée (catégories cochées) en PDF vectoriel."""
-        dialog = ExportDialog(
-            self.document.events, self._registry, self.view.visible_categories, parent=self
-        )
-        if not dialog.exec() or (plan := dialog.plan()) is None:
+        """Exporte la feuille réglée en PDF vectoriel (réduit à 1/N au-delà de 5 m)."""
+        if not self._page_mode:
+            self._mode_chosen(True)
+            self.statusBar().showMessage(
+                self.tr("Réglez la feuille (format, titre…), puis exportez-la en PDF."), 8000
+            )
             return
+        plan = self.page.ensure_current()
+        if plan is None:
+            QMessageBox.information(
+                self,
+                self.tr("Exporter en PDF"),
+                self.tr("Aucun événement à exporter avec les filtres actuels."),
+            )
+            return
+        divisor = self.page.divisor
         suggested = str(self._path.with_suffix(".pdf")) if self._path else "frise.pdf"
         path, _ = QFileDialog.getSaveFileName(
             self, self.tr("Exporter en PDF"), suggested, self.tr("Fichiers PDF (*.pdf)")
@@ -409,13 +609,14 @@ class MainWindow(QMainWindow):
         if not path.lower().endswith(".pdf"):
             path += ".pdf"
         try:
-            write_pdf(path, plan, dialog.document_title())
+            write_pdf(path, plan, plan.title, divisor)
         except OSError as exc:
             QMessageBox.critical(self, self.tr("Export impossible"), plain(str(exc)))
             return
-        self.statusBar().showMessage(
-            self.tr("PDF exporté : %1").replace("%1", Path(path).name), 5000
-        )
+        message = self.tr("PDF exporté : %1").replace("%1", Path(path).name)
+        if divisor > 1:
+            message += " — " + self.tr("à imprimer à %1 %").replace("%1", str(divisor * 100))
+        self.statusBar().showMessage(message, 10000 if divisor > 1 else 5000)
 
     # --- glisser-déposer -----------------------------------------------------------------
 
@@ -541,6 +742,9 @@ class MainWindow(QMainWindow):
         box.exec()
 
     def _update_status(self) -> None:
+        if self._page_mode:
+            self._update_page_status()
+            return
         total = len(self.document.events)
         text = self.tr("%1 événements affichés / %2").replace("%1", str(self.view.displayed_count))
         text = text.replace("%2", str(total))
@@ -550,6 +754,21 @@ class MainWindow(QMainWindow):
                 "%1", str(hidden)
             )
         matches = self.view.match_count
+        if matches is not None:
+            text += " — " + self.tr("%1 correspondances").replace("%1", str(matches))
+        self._status.setText(text)
+
+    def _update_page_status(self) -> None:
+        plan = self.page.plan
+        text = self.page_panel.format_label()
+        if plan is not None:
+            text += " — " + self.tr("texte %1 pt").replace(
+                "%1", f"{plan.font_pt:.1f}".replace(".", ",")
+            )
+            text += " — " + self.tr("%1 titres complets, %2 tronqués, %3 masqués").replace(
+                "%1", str(plan.titles_full)
+            ).replace("%2", str(plan.titles_truncated)).replace("%3", str(plan.titles_hidden))
+        matches = self.page_view.match_count
         if matches is not None:
             text += " — " + self.tr("%1 correspondances").replace("%1", str(matches))
         self._status.setText(text)

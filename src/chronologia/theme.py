@@ -47,6 +47,7 @@ QToolButton {{
 QToolButton:hover {{ background: {ACCENT_SOFT}; }}
 QToolButton:pressed {{ background: #dfe3ff; }}
 QToolButton:disabled {{ color: {DISABLED}; }}
+QToolButton:checked {{ background: {ACCENT_SOFT}; color: {ACCENT}; font-weight: 600; }}
 QToolButton[primary="true"] {{
     background: {ACCENT}; color: white; padding: 6px 14px; font-weight: 600;
 }}

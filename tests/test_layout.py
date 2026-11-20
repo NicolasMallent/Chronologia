@@ -351,3 +351,88 @@ def test_seules_des_categories_vides_cochees_restent_affichees():
     )
     assert [lane.name for lane in layout.lanes] == ["Luttes agricoles"]
     assert layout.ticks == () and layout.x_max == 0.0
+
+
+# --- titres serrés : descendre sur une ligne libre ------------------------------------------
+
+
+def serres(csv_body, **kw):
+    evs = events(csv_body)
+    lane = compute_layout(evs, default_registry(), measure, LayoutOptions(**kw)).lanes[0]
+    return {i.event.title: i for i in lane.items}
+
+
+CLUSTER = (
+    "1900,1900,Premier titre assez long,red\n"
+    "1901,1901,Deuxième titre assez long,red\n"
+    "1902,1902,Troisième titre assez long,red\n"
+)
+
+
+def test_sans_option_les_evenements_qui_se_suivent_restent_sur_la_meme_ligne():
+    items = serres(CLUSTER, px_per_year=20)
+    assert {i.sublane for i in items.values()} == {0}
+    assert items["Premier titre assez long"].label_state != "full"  # serré par le suivant
+
+
+def test_un_titre_qui_ne_tient_pas_fait_descendre_l_element_suivant():
+    items = serres(CLUSTER, px_per_year=20, extra_sublanes=4)
+    assert all(i.label_state == "full" for i in items.values())
+    assert len({i.sublane for i in items.values()}) > 1  # étalés sur plusieurs lignes
+
+
+def test_les_lignes_en_plus_sont_plafonnees():
+    body = "".join(f"{1900 + i},{1900 + i},Un titre bien long numéro {i},red\n" for i in range(12))
+    sub = serres(body, px_per_year=20, extra_sublanes=2)
+    assert max(i.sublane for i in sub.values()) + 1 <= 1 + 2  # 1 ligne de base + 2 en plus
+    assert any(i.label_state != "full" for i in sub.values())  # au-delà : titres tronqués
+    plus = serres(body, px_per_year=20, extra_sublanes=12)
+    assert all(i.label_state == "full" for i in plus.values())
+
+
+def test_les_evenements_simultanes_restent_separes_meme_avec_le_plafond():
+    body = "".join(f"1900,1900,Simultané numéro {i},red\n" for i in range(5))
+    sub = serres(body, extra_sublanes=0)
+    sub_capped = serres(body, extra_sublanes=1)
+    assert len({i.sublane for i in sub.values()}) == 5
+    assert len({i.sublane for i in sub_capped.values()}) == 5  # le temps prime sur le plafond
+
+
+def test_titre_plus_long_que_le_maximum_ne_provoque_pas_de_descente():
+    long_title = "mot " * 300
+    items = serres(f"1900,1900,{long_title.strip()},red\n1901,1901,Suivant,red\n", extra_sublanes=4)
+    assert {i.sublane for i in items.values()} == {0}  # inutile : il ne tiendrait jamais
+
+
+def test_titre_dans_la_barre_ne_fait_pas_descendre_le_suivant():
+    items = serres("1900,1950,Période avec un titre,red\n1951,1951,Suivant,red\n", extra_sublanes=4)
+    assert {i.sublane for i in items.values()} == {0}
+
+
+@pytest.mark.skipif(not EXEMPLE.exists(), reason="CSV d'exemple absent")
+@pytest.mark.parametrize("extra", [0, 3, 6])
+def test_exemple_reel_invariants_avec_lignes_en_plus(extra):
+    evs = read_events(EXEMPLE).events
+    opts = LayoutOptions(px_per_year=60, max_label_lines=3, extra_sublanes=extra)
+    layout = compute_layout(evs, default_registry(), measure, opts)
+    assert len(list(layout.items())) == len(evs)
+    for lane in layout.lanes:
+        by_sub: dict[int, list] = {}
+        for item in lane.items:
+            by_sub.setdefault(item.sublane, []).append(item)
+        base = len({i.sublane for i in lane.items})
+        for items in by_sub.values():
+            items.sort(key=lambda i: i.x0)
+            for a, b in itertools.pairwise(items):
+                assert _span(a.event)[1] <= _span(b.event)[0] + 1e-9  # jamais simultanés
+                if a.label_lines and not a.label_inside:
+                    assert (
+                        a.right <= b.left - opts.gap + 1e-9
+                    )  # titre affiché : pas de recouvrement
+        assert base >= 1
+    hidden = layout.titles_hidden + layout.titles_truncated
+    if extra:
+        plain = compute_layout(
+            evs, default_registry(), measure, LayoutOptions(px_per_year=60, max_label_lines=3)
+        )
+        assert hidden <= plain.titles_hidden + plain.titles_truncated  # jamais pire

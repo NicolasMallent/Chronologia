@@ -111,6 +111,24 @@
     </message>
 </context>
 <context>
+    <name>EditableView</name>
+    <message>
+        <location filename="../editing_view.py" line="87"/>
+        <source>Modifier…</source>
+        <translation>Edit…</translation>
+    </message>
+    <message>
+        <location filename="../editing_view.py" line="90"/>
+        <source>Supprimer</source>
+        <translation>Delete</translation>
+    </message>
+    <message>
+        <location filename="../editing_view.py" line="96"/>
+        <source>Nouvel événement ici…</source>
+        <translation>New event here…</translation>
+    </message>
+</context>
+<context>
     <name>EventDialog</name>
     <message>
         <location filename="../event_dialog.py" line="47"/>
@@ -224,114 +242,6 @@
     </message>
 </context>
 <context>
-    <name>ExportDialog</name>
-    <message>
-        <location filename="../export_dialog.py" line="51"/>
-        <source>Exporter en PDF</source>
-        <translation>Export to PDF</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="69"/>
-        <source>Personnalisé</source>
-        <translation>Custom</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="72"/>
-        <source>Paysage</source>
-        <translation>Landscape</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="73"/>
-        <source>Portrait</source>
-        <translation>Portrait</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="81"/>
-        <source>Titre affiché en haut de la frise (facultatif)</source>
-        <translation>Title shown at the top of the timeline (optional)</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="83"/>
-        <source>Limiter à la période</source>
-        <translation>Limit to period</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="104"/>
-        <source>La frise est étirée tant que le texte reste au moins de cette taille : plus la page est grande, plus de titres s&apos;affichent en entier.</source>
-        <translation>The timeline is stretched as long as the text stays at least this size: the larger the page, the more titles are shown in full.</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="114"/>
-        <source>Un titre trop long pour la place disponible passe sur plusieurs lignes (jusqu&apos;à ce nombre) : plus de titres s&apos;affichent en entier, mais les lignes de la frise deviennent plus hautes.</source>
-        <translation>A title too long for the available space wraps onto several lines (up to this number): more titles are shown in full, but the timeline rows become taller.</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="130"/>
-        <source>Format</source>
-        <translation>Format</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="131"/>
-        <source>Orientation</source>
-        <translation>Orientation</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="132"/>
-        <source>Dimensions</source>
-        <translation>Dimensions</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="133"/>
-        <source>Titre</source>
-        <translation>Title</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="134"/>
-        <source>Période</source>
-        <translation>Period</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="135"/>
-        <source>Taille minimale du texte</source>
-        <translation>Minimum text size</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="136"/>
-        <source>Lignes maximum par titre</source>
-        <translation>Maximum lines per title</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="141"/>
-        <source>Exporter…</source>
-        <translation>Export…</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="242"/>
-        <source>Aucun événement à exporter avec les filtres actuels.</source>
-        <translation>No events to export with the current filters.</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="253"/>
-        <source>%1 événements, %2 catégories. Taille du texte sur la page : %3 pt.</source>
-        <translation>%1 events, %2 categories. Text size on the page: %3 pt.</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="263"/>
-        <source>%1 titres tronqués ou masqués : choisissez une page plus grande ou réduisez la taille minimale du texte pour en afficher davantage.</source>
-        <translation>%1 titles truncated or hidden: choose a larger page or reduce the minimum text size to show more of them.</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="270"/>
-        <source>Texte très petit : choisissez un format plus grand ou une période plus courte.</source>
-        <translation>Very small text: choose a larger format or a shorter period.</translation>
-    </message>
-    <message>
-        <location filename="../export_dialog.py" line="276"/>
-        <source>Au-delà de 5 m, certains lecteurs PDF refusent la page. Le PDF est vectoriel : exportez à la moitié ou au dixième de la taille, puis agrandissez à l&apos;impression.</source>
-        <translation>Above 5 m, some PDF readers reject the page. The PDF is vector-based: export at half or one tenth of the size, then enlarge when printing.</translation>
-    </message>
-</context>
-<context>
     <name>FilterPanel</name>
     <message>
         <location filename="../filter_panel.py" line="44"/>
@@ -350,250 +260,371 @@
     </message>
 </context>
 <context>
+    <name>Formats</name>
+    <message>
+        <location filename="../page_panel.py" line="45"/>
+        <source>Le nom du format est vide ou trop long.</source>
+        <translation>The format name is empty or too long.</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="47"/>
+        <source>Un format porte déjà ce nom.</source>
+        <translation>A format already has this name.</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="49"/>
+        <source>Les dimensions doivent être comprises entre 5 cm et 20 m.</source>
+        <translation>Dimensions must be between 5 cm and 20 m.</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="53"/>
+        <source>Trop de formats enregistrés.</source>
+        <translation>Too many saved formats.</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
-        <location filename="../main_window.py" line="63"/>
+        <location filename="../main_window.py" line="81"/>
         <source>Déposez un fichier CSV pour l&apos;ouvrir</source>
         <translation>Drop a CSV file to open it</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="70"/>
-        <location filename="../main_window.py" line="283"/>
-        <location filename="../main_window.py" line="302"/>
+        <location filename="../main_window.py" line="88"/>
+        <location filename="../main_window.py" line="469"/>
+        <location filename="../main_window.py" line="489"/>
         <source>Catégories</source>
         <translation>Categories</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="91"/>
+        <location filename="../main_window.py" line="105"/>
+        <location filename="../main_window.py" line="233"/>
+        <source>Feuille</source>
+        <translation>Sheet</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="132"/>
+        <source>Formats personnalisés illisibles, ignorés : %1</source>
+        <translation>Unreadable custom formats, ignored: %1</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="140"/>
         <source>Catégories personnalisées illisibles, valeurs par défaut utilisées : %1</source>
         <translation>Custom categories unreadable, defaults used: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="101"/>
+        <location filename="../main_window.py" line="159"/>
         <source>&amp;Ouvrir un CSV…</source>
         <translation>&amp;Open CSV…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="104"/>
+        <location filename="../main_window.py" line="162"/>
         <source>&amp;Enregistrer</source>
         <translation>&amp;Save</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="107"/>
+        <location filename="../main_window.py" line="165"/>
         <source>Enregistrer &amp;sous…</source>
         <translation>Save &amp;as…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="110"/>
+        <location filename="../main_window.py" line="168"/>
         <source>E&amp;xporter en PDF…</source>
         <translation>E&amp;xport to PDF…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="113"/>
+        <location filename="../main_window.py" line="171"/>
         <source>&amp;Quitter</source>
         <translation>&amp;Quit</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="116"/>
+        <location filename="../main_window.py" line="174"/>
         <source>&amp;Préférences…</source>
         <translation>&amp;Preferences…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="119"/>
+        <location filename="../main_window.py" line="177"/>
         <source>&amp;Fichier</source>
         <translation>&amp;File</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="127"/>
+        <location filename="../main_window.py" line="185"/>
         <source>&amp;Nouvel événement…</source>
         <translation>&amp;New event…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="130"/>
-        <location filename="../main_window.py" line="218"/>
+        <location filename="../main_window.py" line="188"/>
+        <location filename="../main_window.py" line="335"/>
         <source>Annuler</source>
         <translation>Undo</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="133"/>
-        <location filename="../main_window.py" line="219"/>
+        <location filename="../main_window.py" line="191"/>
+        <location filename="../main_window.py" line="336"/>
         <source>Rétablir</source>
         <translation>Redo</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="142"/>
+        <location filename="../main_window.py" line="200"/>
         <source>&amp;Gérer les catégories…</source>
         <translation>&amp;Manage categories…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="145"/>
+        <location filename="../main_window.py" line="203"/>
         <source>&amp;Édition</source>
         <translation>&amp;Edit</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="151"/>
+        <location filename="../main_window.py" line="209"/>
         <source>Zoom +</source>
         <translation>Zoom in</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="154"/>
+        <location filename="../main_window.py" line="212"/>
         <source>Zoom −</source>
         <translation>Zoom out</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="157"/>
+        <location filename="../main_window.py" line="215"/>
         <source>Ajuster</source>
         <translation>Fit</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="162"/>
+        <location filename="../main_window.py" line="220"/>
         <source>Rechercher un événement…</source>
         <translation>Search for an event…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="172"/>
+        <location filename="../main_window.py" line="230"/>
+        <source>Libre</source>
+        <translation>Free</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="232"/>
+        <source>Frise libre : le zoom dévoile les titres</source>
+        <translation>Free timeline: zooming reveals the titles</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="235"/>
+        <source>Feuille : la frise au format d&apos;impression</source>
+        <translation>Sheet: the timeline at print size</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="241"/>
+        <source>Mode Libre</source>
+        <translation>Free mode</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="242"/>
+        <source>Mode Feuille</source>
+        <translation>Sheet mode</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="246"/>
+        <source>Largeur de la feuille</source>
+        <translation>Sheet width</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="249"/>
+        <source>Hauteur de la feuille</source>
+        <translation>Sheet height</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="252"/>
+        <source>Taille réelle (100 %)</source>
+        <translation>Actual size (100 %)</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="256"/>
+        <source>Règles</source>
+        <translation>Rulers</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="261"/>
+        <source>Mini-carte</source>
+        <translation>Mini-map</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="277"/>
         <source>Nouvel événement</source>
         <translation>New event</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="176"/>
+        <location filename="../main_window.py" line="281"/>
         <source>Outils</source>
         <translation>Tools</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="197"/>
+        <location filename="../main_window.py" line="305"/>
         <source>&amp;Affichage</source>
         <translation>&amp;View</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="210"/>
+        <location filename="../main_window.py" line="327"/>
         <source>Langue</source>
         <translation>Language</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="211"/>
+        <location filename="../main_window.py" line="328"/>
         <source>La nouvelle langue sera appliquée au prochain démarrage de Chronologia.</source>
         <translation>The new language will be applied the next time Chronologia starts.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="247"/>
+        <location filename="../main_window.py" line="409"/>
+        <source>Formats</source>
+        <translation>Formats</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="410"/>
+        <source>Format appliqué mais non enregistré : %1</source>
+        <translation>Format applied but not saved: %1</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="433"/>
         <source>Supprimer l&apos;événement</source>
         <translation>Delete event</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="248"/>
+        <location filename="../main_window.py" line="434"/>
         <source>Supprimer « %1 » ? (Annulable avec Ctrl+Z)</source>
         <translation>Delete “%1”? (Can be undone with Ctrl+Z)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="304"/>
+        <location filename="../main_window.py" line="491"/>
         <source>Catégories appliquées mais non enregistrées : %1</source>
         <translation>Categories applied but not saved: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="340"/>
+        <location filename="../main_window.py" line="530"/>
         <source>Ouvrir un CSV</source>
         <translation>Open a CSV</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="342"/>
+        <location filename="../main_window.py" line="532"/>
         <source>Fichiers CSV (*.csv);;Tous les fichiers (*)</source>
         <translation>CSV files (*.csv);;All files (*)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="352"/>
+        <location filename="../main_window.py" line="542"/>
         <source>Import impossible</source>
         <translation>Import failed</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="375"/>
+        <location filename="../main_window.py" line="565"/>
         <source>Enregistrer sous</source>
         <translation>Save as</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="375"/>
+        <location filename="../main_window.py" line="565"/>
         <source>Fichiers CSV (*.csv)</source>
         <translation>CSV files (*.csv)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="387"/>
+        <location filename="../main_window.py" line="577"/>
         <source>Enregistrement impossible</source>
         <translation>Save failed</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="393"/>
+        <location filename="../main_window.py" line="583"/>
         <source>Enregistré : %1</source>
         <translation>Saved: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="405"/>
+        <location filename="../main_window.py" line="591"/>
+        <source>Réglez la feuille (format, titre…), puis exportez-la en PDF.</source>
+        <translation>Set up the sheet (format, title…), then export it as PDF.</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="598"/>
+        <location filename="../main_window.py" line="605"/>
         <source>Exporter en PDF</source>
         <translation>Export to PDF</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="405"/>
+        <location filename="../main_window.py" line="599"/>
+        <source>Aucun événement à exporter avec les filtres actuels.</source>
+        <translation>No events to export with the current filters.</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="605"/>
         <source>Fichiers PDF (*.pdf)</source>
         <translation>PDF files (*.pdf)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="414"/>
+        <location filename="../main_window.py" line="614"/>
         <source>Export impossible</source>
         <translation>Export failed</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="417"/>
+        <location filename="../main_window.py" line="616"/>
         <source>PDF exporté : %1</source>
         <translation>PDF exported: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="447"/>
+        <location filename="../main_window.py" line="618"/>
+        <source>à imprimer à %1 %</source>
+        <translation>print at %1 %</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="648"/>
         <source>Seuls les fichiers CSV peuvent être déposés.</source>
         <translation>Only CSV files can be dropped.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="476"/>
+        <location filename="../main_window.py" line="677"/>
         <source>%1 fichiers déposés : « %2 » est ouvert, les autres sont ignorés.</source>
         <translation>%1 files dropped: “%2” is opened, the others are ignored.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="488"/>
+        <location filename="../main_window.py" line="689"/>
         <source>Modifications non enregistrées</source>
         <translation>Unsaved changes</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="489"/>
+        <location filename="../main_window.py" line="690"/>
         <source>Enregistrer les modifications avant de continuer ?</source>
         <translation>Save changes before continuing?</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="529"/>
+        <location filename="../main_window.py" line="730"/>
         <source>Import terminé avec des anomalies</source>
         <translation>Import completed with issues</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="531"/>
+        <location filename="../main_window.py" line="732"/>
         <source>%1 événements importés, %2 lignes ignorées, %3 corrigées.</source>
         <translation>%1 events imported, %2 rows skipped, %3 corrected.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="536"/>
+        <location filename="../main_window.py" line="737"/>
         <source>ligne</source>
         <translation>row</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="545"/>
+        <location filename="../main_window.py" line="749"/>
         <source>%1 événements affichés / %2</source>
         <translation>%1 events shown / %2</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="549"/>
+        <location filename="../main_window.py" line="753"/>
         <source>%1 titres masqués (zoomez pour les voir)</source>
         <translation>%1 titles hidden (zoom in to see them)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="554"/>
+        <location filename="../main_window.py" line="758"/>
+        <location filename="../main_window.py" line="773"/>
         <source>%1 correspondances</source>
         <translation>%1 matches</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="765"/>
+        <source>texte %1 pt</source>
+        <translation>text %1 pt</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="768"/>
+        <source>%1 titres complets, %2 tronqués, %3 masqués</source>
+        <translation>%1 titles complete, %2 truncated, %3 hidden</translation>
     </message>
 </context>
 <context>
@@ -685,6 +716,148 @@
     </message>
 </context>
 <context>
+    <name>PagePanel</name>
+    <message>
+        <location filename="../page_panel.py" line="81"/>
+        <source>Paysage</source>
+        <translation>Landscape</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="82"/>
+        <source>Portrait</source>
+        <translation>Portrait</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="88"/>
+        <source>Enregistrer ce format…</source>
+        <translation>Save this format…</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="89"/>
+        <source>Supprimer ce format</source>
+        <translation>Delete this format</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="96"/>
+        <source>Titre affiché en haut de la frise (facultatif)</source>
+        <translation>Title shown at the top of the timeline (optional)</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="98"/>
+        <source>Limiter à la période</source>
+        <translation>Limit to period</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="125"/>
+        <source>Un titre trop long pour la place disponible passe sur plusieurs lignes (jusqu&apos;à ce nombre) : plus de titres s&apos;affichent en entier, mais les lignes de la frise deviennent plus hautes.</source>
+        <translation>A title too long for the available space wraps onto several lines (up to this number): more titles are shown in full, but the timeline rows become taller.</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="145"/>
+        <source>Exporter en PDF…</source>
+        <translation>Export to PDF…</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="150"/>
+        <source>Format</source>
+        <translation>Format</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="151"/>
+        <source>Orientation</source>
+        <translation>Orientation</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="152"/>
+        <source>Dimensions</source>
+        <translation>Dimensions</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="154"/>
+        <source>Titre</source>
+        <translation>Title</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="116"/>
+        <source>Taille du texte sur la feuille. La frise s&apos;élargit quand le texte est plus petit : plus de titres s&apos;affichent en entier.</source>
+        <translation>Text size on the sheet. The timeline gets wider when the text is smaller: more titles are shown in full.</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="156"/>
+        <source>Taille du texte</source>
+        <translation>Text size</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="157"/>
+        <source>Lignes maximum par titre</source>
+        <translation>Maximum lines per title</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="202"/>
+        <source>Personnalisé</source>
+        <translation>Custom</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="263"/>
+        <source>Enregistrer ce format</source>
+        <translation>Save this format</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="263"/>
+        <source>Nom du format :</source>
+        <translation>Format name:</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="275"/>
+        <location filename="../page_panel.py" line="290"/>
+        <source>Formats</source>
+        <translation>Formats</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="291"/>
+        <source>Supprimer le format « %1 » ?</source>
+        <translation>Delete format “%1”?</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="348"/>
+        <source>Aucun événement à afficher avec les filtres actuels.</source>
+        <translation>No events to display with the current filters.</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="354"/>
+        <source>%1 événements, %2 catégories. Taille du texte sur la page : %3 pt.</source>
+        <translation>%1 events, %2 categories. Text size on the page: %3 pt.</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="364"/>
+        <source>%1 titres tronqués ou masqués : choisissez une page plus grande ou réduisez la taille du texte pour en afficher davantage.</source>
+        <translation>%1 titles truncated or hidden: choose a larger page or reduce the text size to show more of them.</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="371"/>
+        <source>Texte réduit à %1 pt (au lieu de %2 pt) pour que la frise tienne dans la hauteur de la page : choisissez une page plus haute ou un texte plus petit.</source>
+        <translation>Text reduced to %1 pt (instead of %2 pt) so that the timeline fits the page height: choose a taller page or smaller text.</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="380"/>
+        <source>Texte très petit : choisissez un format plus grand ou une période plus courte.</source>
+        <translation>Very small text: choose a larger format or a shorter period.</translation>
+    </message>
+    <message>
+        <location filename="../page_panel.py" line="387"/>
+        <source>Au-delà de 5 m, certains lecteurs PDF refusent la page : le PDF sera exporté à l&apos;échelle 1/%1 (vectoriel, sans perte). Imprimez-le à %2 %.</source>
+        <translation>Beyond 5 m, some PDF readers refuse the page: the PDF will be exported at 1/%1 scale (vector, lossless). Print it at %2 %.</translation>
+    </message>
+</context>
+<context>
+    <name>PageView</name>
+    <message>
+        <location filename="../page_view.py" line="149"/>
+        <source>Aucun événement à afficher</source>
+        <translation>No events to display</translation>
+    </message>
+</context>
+<context>
     <name>PreferencesDialog</name>
     <message>
         <location filename="../preferences_dialog.py" line="34"/>
@@ -752,22 +925,7 @@
 <context>
     <name>TimelineView</name>
     <message>
-        <location filename="../timeline_view.py" line="261"/>
-        <source>Modifier…</source>
-        <translation>Edit…</translation>
-    </message>
-    <message>
-        <location filename="../timeline_view.py" line="264"/>
-        <source>Supprimer</source>
-        <translation>Delete</translation>
-    </message>
-    <message>
-        <location filename="../timeline_view.py" line="271"/>
-        <source>Nouvel événement ici…</source>
-        <translation>New event here…</translation>
-    </message>
-    <message>
-        <location filename="../timeline_view.py" line="389"/>
+        <location filename="../timeline_view.py" line="332"/>
         <source>Ouvrez un fichier CSV (Ctrl+O) ou glissez-le ici</source>
         <translation>Open a CSV file (Ctrl+O) or drag it here</translation>
     </message>
