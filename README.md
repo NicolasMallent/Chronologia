@@ -1,6 +1,16 @@
 # Chronologia
 Timeline visualisation - Transform your CSV into a banner for your seminar and presentation
 
+## Utilisation
+- **Ouvrir** un CSV : Ctrl+O ou glisser le fichier dans la fenêtre.
+- **Mode Libre** : la frise s'étire quand on zoome (molette) et dévoile les titres.
+- **Mode Feuille** : la frise sur une feuille aux dimensions réelles (A6 à A0 ou format libre, par
+  exemple une banderole de 10 m × 1 m), telle qu'elle sera imprimée. Molette = zoom, Maj + molette =
+  défilement vertical, Alt + molette = défilement horizontal, glisser = déplacer. Ctrl+0 feuille entière,
+  Ctrl+1 largeur, Ctrl+2 hauteur, Ctrl+3 taille réelle ; règles en cm / m et mini-carte.
+  Au-delà de 5 m, le PDF est exporté à l'échelle 1/N (vectoriel) et s'imprime à N × 100 %.
+- Les raccourcis et la langue se règlent dans Fichier › Préférences.
+
 ## Développement
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
