@@ -26,6 +26,11 @@ les push et pull requests ne lancent que les tests (`ci.yml`).
 
 1. Mettre à jour la version dans `pyproject.toml` **et** `src/chronologia/__init__.py`.
 2. Commiter, puis créer sur GitHub une release avec le tag `vX.Y.Z` (même numéro) et la publier.
+   Pour une **pré-release** (essai du workflow), utiliser le tag `vX.Y.Z-rcN` (ex. `v0.1.0-rc1`) et
+   cocher « Set as a pre-release » : la version dans `pyproject.toml` reste `X.Y.Z`, le workflow
+   refuse un tag `-rcN` qui n'est pas une pré-release (et inversement). Les paquets s'appellent
+   alors `chronologia_X.Y.Z~rcN_amd64.deb` (le `~` place la pré-release avant la version finale pour
+   `dpkg`) et `Chronologia-Setup-X.Y.Z-rcN.exe`.
 3. Le workflow vérifie la cohérence des versions et lance les tests, construit
    `chronologia_X.Y.Z_amd64.deb` (Debian 12+ / Ubuntu 22.04+) et `Chronologia-Setup-X.Y.Z.exe`
    (Windows 11), vérifie chaque paquet avec `--smoke-test`, puis les joint à la release avec leur

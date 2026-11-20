@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       version: ${{ steps.version.outputs.version }}
+      deb_version: ${{ steps.version.outputs.deb_version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -31,20 +32,26 @@ jobs:
         id: version
         env:
           TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
           python - <<'PY'
           import os, re, sys, tomllib
           tag = os.environ["TAG"]
-          match = re.fullmatch(r"v(\d+\.\d+\.\d+)", tag)
+          match = re.fullmatch(r"v(\d+\.\d+\.\d+)(?:-(rc\d+))?", tag)
           if not match:
-              sys.exit(f"Tag invalide : {tag!r} (attendu : vX.Y.Z)")
-          version = match.group(1)
+              sys.exit(f"Tag invalide : {tag!r} (attendu : vX.Y.Z ou vX.Y.Z-rcN)")
+          base, rc = match.group(1), match.group(2)
+          prerelease = os.environ["PRERELEASE"] == "true"
+          if bool(rc) != prerelease:
+              sys.exit("Un tag -rcN doit être publié comme pré-release, et inversement")
           pyproject = tomllib.load(open("pyproject.toml", "rb"))["project"]["version"]
           init = re.search(r'__version__ = "([^"]+)"', open("src/chronologia/__init__.py").read())
-          if pyproject != version or not init or init.group(1) != version:
-              sys.exit(f"Versions incohérentes : tag {version}, pyproject {pyproject}, __init__ {init and init.group(1)}")
+          if pyproject != base or not init or init.group(1) != base:
+              sys.exit(f"Versions incohérentes : tag {base}, pyproject {pyproject}, __init__ {init and init.group(1)}")
+          version = f"{base}-{rc}" if rc else base  # affichée (Setup.exe)
+          deb_version = f"{base}~{rc}" if rc else base  # « ~ » : avant la version finale pour dpkg
           with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-              out.write(f"version={version}\n")
+              out.write(f"version={version}\ndeb_version={deb_version}\n")
           PY
 
       - name: Bibliothèques système de Qt
@@ -67,7 +74,7 @@ jobs:
     permissions:
       contents: write # joindre le fichier à la release
     env:
-      VERSION: ${{ needs.verify.outputs.version }}
+      VERSION: ${{ needs.verify.outputs.deb_version }}
       TAG: ${{ github.event.release.tag_name }}
       GH_TOKEN: ${{ github.token }}
     steps:
