@@ -6,7 +6,7 @@ from collections import Counter
 from pathlib import Path
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QKeySequence
+from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
 from PySide6.QtWidgets import (
     QDockWidget,
     QFileDialog,
@@ -27,11 +27,13 @@ from .document import Document
 from .event_dialog import EventDialog
 from .export_dialog import ExportDialog
 from .filter_panel import FilterPanel
-from .i18n import LANGUAGES, effective_language, save_language
+from .i18n import effective_language, save_language
 from .icons import make_icon
 from .messages import category_error_text, format_error_text, issue_text
 from .model import Event
 from .pdf_export import write_pdf
+from .preferences_dialog import PreferencesDialog
+from .shortcuts import ShortcutManager
 from .textutil import plain
 from .timeline_view import TimelineView
 
@@ -81,35 +83,42 @@ class MainWindow(QMainWindow):
     # --- actions ---------------------------------------------------------------------
 
     def _build_actions(self) -> None:
+        self.shortcuts = ShortcutManager()
+        reg = self.shortcuts.register
         open_action = QAction(self.tr("&Ouvrir un CSV…"), self)
-        open_action.setShortcut(QKeySequence.StandardKey.Open)
+        reg("open", open_action, QKeySequence.StandardKey.Open)
         open_action.triggered.connect(self.open_dialog)
         save_action = QAction(self.tr("&Enregistrer"), self)
-        save_action.setShortcut(QKeySequence.StandardKey.Save)
+        reg("save", save_action, QKeySequence.StandardKey.Save)
         save_action.triggered.connect(self.save)
         save_as_action = QAction(self.tr("Enregistrer &sous…"), self)
-        save_as_action.setShortcut(QKeySequence.StandardKey.SaveAs)
+        reg("save_as", save_as_action, QKeySequence.StandardKey.SaveAs)
         save_as_action.triggered.connect(self.save_as)
         export_action = QAction(self.tr("E&xporter en PDF…"), self)
-        export_action.setShortcut("Ctrl+E")
+        reg("export_pdf", export_action, "Ctrl+E")
         export_action.triggered.connect(self.export_pdf)
         quit_action = QAction(self.tr("&Quitter"), self)
-        quit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        reg("quit", quit_action, QKeySequence.StandardKey.Quit)
         quit_action.triggered.connect(self.close)
+        preferences_action = QAction(self.tr("&Préférences…"), self)
+        reg("preferences", preferences_action, QKeySequence.StandardKey.Preferences)
+        preferences_action.triggered.connect(self.show_preferences)
         file_menu = self.menuBar().addMenu(self.tr("&Fichier"))
         for action in (open_action, save_action, save_as_action, export_action):
             file_menu.addAction(action)
         file_menu.addSeparator()
+        file_menu.addAction(preferences_action)
+        file_menu.addSeparator()
         file_menu.addAction(quit_action)
 
         new_action = QAction(self.tr("&Nouvel événement…"), self)
-        new_action.setShortcut(QKeySequence.StandardKey.New)
+        reg("new_event", new_action, QKeySequence.StandardKey.New)
         new_action.triggered.connect(lambda: self.new_event())
         self.undo_action = QAction(make_icon("undo"), self.tr("Annuler"), self)
-        self.undo_action.setShortcut(QKeySequence.StandardKey.Undo)
+        reg("undo", self.undo_action, QKeySequence.StandardKey.Undo)
         self.undo_action.triggered.connect(self.document.stack.undo)
         self.redo_action = QAction(make_icon("redo"), self.tr("Rétablir"), self)
-        self.redo_action.setShortcut(QKeySequence.StandardKey.Redo)
+        reg("redo", self.redo_action, QKeySequence.StandardKey.Redo)
         self.redo_action.triggered.connect(self.document.stack.redo)
         stack = self.document.stack
         stack.canUndoChanged.connect(self._update_undo_actions)
@@ -118,6 +127,7 @@ class MainWindow(QMainWindow):
         stack.redoTextChanged.connect(self._update_undo_actions)
         self._update_undo_actions()
         categories_action = QAction(self.tr("&Gérer les catégories…"), self)
+        reg("categories", categories_action, None)
         categories_action.triggered.connect(self.manage_categories)
         edit_menu = self.menuBar().addMenu(self.tr("&Édition"))
         for action in (new_action, self.undo_action, self.redo_action):
@@ -126,13 +136,13 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(categories_action)
 
         zoom_in = QAction(make_icon("zoom_in"), self.tr("Zoom +"), self)
-        zoom_in.setShortcut(QKeySequence.StandardKey.ZoomIn)
+        reg("zoom_in", zoom_in, QKeySequence.StandardKey.ZoomIn)
         zoom_in.triggered.connect(lambda: self.view.zoom_by(1.25))
         zoom_out = QAction(make_icon("zoom_out"), self.tr("Zoom −"), self)
-        zoom_out.setShortcut(QKeySequence.StandardKey.ZoomOut)
+        reg("zoom_out", zoom_out, QKeySequence.StandardKey.ZoomOut)
         zoom_out.triggered.connect(lambda: self.view.zoom_by(1 / 1.25))
         fit = QAction(make_icon("fit"), self.tr("Ajuster"), self)
-        fit.setShortcut("Ctrl+0")
+        reg("fit", fit, "Ctrl+0")
         fit.triggered.connect(self.view.fit_width)
 
         self.search = QLineEdit()
@@ -173,26 +183,19 @@ class MainWindow(QMainWindow):
         view_menu = self.menuBar().addMenu(self.tr("&Affichage"))
         for action in (zoom_in, zoom_out, fit):
             view_menu.addAction(action)
-        view_menu.addSeparator()
-        language_menu = view_menu.addMenu(self.tr("&Langue"))
-        group = QActionGroup(self)
-        group.setExclusive(True)
-        current = effective_language()
-        for code, name in LANGUAGES.items():
-            action = QAction(name, self)
-            action.setCheckable(True)
-            action.setChecked(code == current)
-            action.triggered.connect(lambda _checked=False, c=code: self._change_language(c))
-            group.addAction(action)
-            language_menu.addAction(action)
 
-    def _change_language(self, code: str) -> None:
-        save_language(code)
-        QMessageBox.information(
-            self,
-            self.tr("Langue"),
-            self.tr("La nouvelle langue sera appliquée au prochain démarrage de Chronologia."),
-        )
+    def show_preferences(self) -> None:
+        dialog = PreferencesDialog(self.shortcuts, parent=self)
+        if not dialog.exec():
+            return
+        dialog.apply_shortcuts()
+        if dialog.selected_language() != effective_language():
+            save_language(dialog.selected_language())
+            QMessageBox.information(
+                self,
+                self.tr("Langue"),
+                self.tr("La nouvelle langue sera appliquée au prochain démarrage de Chronologia."),
+            )
 
     def _update_undo_actions(self) -> None:
         stack = self.document.stack

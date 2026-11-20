@@ -26,7 +26,7 @@ dans le code, et le module réseau de Qt n'est jamais chargé pendant une sessio
 |------|----|-------|
 | CSV et PDF que vous enregistrez ou exportez | l'emplacement que vous choisissez | à votre demande uniquement |
 | Fichiers temporaires `*.tmp` (écriture atomique) | à côté du fichier cible | supprimés aussitôt, y compris en cas d'erreur |
-| Langue de l'interface | Linux : `~/.config/Chronologia/Chronologia.conf` ; Windows : registre `HKEY_CURRENT_USER\Software\Chronologia` | quand vous choisissez une langue |
+| Langue de l'interface et raccourcis clavier que vous personnalisez | Linux : `~/.config/Chronologia/Chronologia.conf` ; Windows : registre `HKEY_CURRENT_USER\Software\Chronologia` | quand vous choisissez une langue ou modifiez un raccourci (Fichier › Préférences) |
 | Catégories personnalisées (nom, couleur) | Linux : `~/.config/chronologia/categories.json` ; Windows : `%APPDATA%\chronologia\categories.json` | quand vous enregistrez vos catégories |
 
 L'historique d'annulation reste en mémoire et disparaît à la fermeture.
@@ -43,7 +43,7 @@ personnelles que vous n'avez pas le droit de partager.
 
 L'application ne conserve rien d'autre que ce qui est listé ci-dessus. Pour tout effacer, supprimez
 vos fichiers CSV/PDF, le dossier `chronologia` de la configuration et la clé de registre ou le fichier
-`Chronologia.conf` de la langue. Les droits d'accès, de rectification et d'effacement ne s'exercent
+`Chronologia.conf` (langue et raccourcis). Les droits d'accès, de rectification et d'effacement ne s'exercent
 pas auprès du développeur, qui ne détient aucune donnée vous concernant.
 
 ## Distribution

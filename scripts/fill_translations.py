@@ -64,6 +64,18 @@ UNSEEN_ES = (
     "%1 títulos recortados u ocultos: elija una página mayor "
     "o reduzca el tamaño mínimo del texto para mostrar más."
 )
+FIXED_FR = (
+    "Touches fixes : Suppr supprime l'événement sélectionné, Échap le désélectionne, "
+    "molette = zoom, Maj + molette = défilement vertical."
+)
+FIXED_EN = (
+    "Fixed keys: Del deletes the selected event, Esc deselects it, "
+    "wheel = zoom, Shift + wheel = vertical scroll."
+)
+FIXED_ES = (
+    "Teclas fijas: Supr elimina el evento seleccionado, Esc lo deselecciona, "
+    "rueda = zoom, Mayús + rueda = desplazamiento vertical."
+)
 T: dict[str, tuple[str, str]] = {
     "Ajouter un événement": ("Add an event", "Añadir un evento"),
     "Modifier un événement": ("Edit an event", "Modificar un evento"),
@@ -279,6 +291,24 @@ T: dict[str, tuple[str, str]] = {
         "%1 títulos ocultos (acerque para verlos)",
     ),
     "Taille minimale du texte": ("Minimum text size", "Tamaño mínimo del texto"),
+    "&Préférences…": ("&Preferences…", "&Preferencias…"),
+    "Préférences": ("Preferences", "Preferencias"),
+    "Général": ("General", "General"),
+    "Raccourcis": ("Shortcuts", "Atajos"),
+    "Action": ("Action", "Acción"),
+    "Raccourci": ("Shortcut", "Atajo"),
+    "Appuyer sur un raccourci": ("Press a shortcut", "Pulse un atajo"),
+    "Réinitialiser": ("Reset", "Restablecer"),
+    "Tout réinitialiser": ("Reset all", "Restablecer todo"),
+    "Ce raccourci est déjà utilisé par « %1 ».": (
+        "This shortcut is already used by “%1”.",
+        "Este atajo ya lo usa «%1».",
+    ),
+    "La nouvelle langue est appliquée au prochain démarrage.": (
+        "The new language is applied the next time the application starts.",
+        "El nuevo idioma se aplica en el próximo inicio de la aplicación.",
+    ),
+    FIXED_FR: (FIXED_EN, FIXED_ES),
     "Lignes maximum par titre": ("Maximum lines per title", "Líneas máximas por título"),
     LINES_FR: (LINES_EN, LINES_ES),
     STRETCH_FR: (STRETCH_EN, STRETCH_ES),
