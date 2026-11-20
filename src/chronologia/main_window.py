@@ -76,6 +76,7 @@ class MainWindow(QMainWindow):
         self._stack.addWidget(self.page_container)
         self.setCentralWidget(self._stack)
         self._page_mode = False
+        self._page_dock_sized = False
         self._reveal_in_page: Event | None = None
         self.setAcceptDrops(True)  # glisser-déposer d'un CSV n'importe où dans la fenêtre
         self._drop_overlay = QLabel(self.tr("Déposez un fichier CSV pour l'ouvrir"), self._stack)
@@ -353,6 +354,10 @@ class MainWindow(QMainWindow):
         self._page_mode = page
         self._stack.setCurrentWidget(self.page_container if page else self.view)
         self._page_dock.setVisible(page)
+        if page and not self._page_dock_sized:
+            # le volet prendrait sinon la largeur préférée du panneau (très variable selon le système)
+            self.resizeDocks([self._page_dock], [PAGE_DOCK_WIDTH], Qt.Orientation.Horizontal)
+            self._page_dock_sized = True
         self._mode_actions[1 if page else 0].setChecked(True)
         for action in self._page_only_actions:
             action.setEnabled(page)

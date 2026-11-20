@@ -350,11 +350,12 @@ def test_le_cadre_de_depot_couvre_aussi_le_mode_feuille(window):
 # --- panneau étroit, taille de la fenêtre, police ---------------------------------------------
 
 
-def test_le_panneau_reste_etroit_et_tient_dans_son_volet(app):
+def test_le_panneau_a_une_largeur_minimale_raisonnable(app):
     panel = PagePanel()
-    # n'impose pas sa largeur à la fenêtre (la largeur dépend de la police : marge confortable)
+    # seule la largeur *minimale* compte : elle ne doit pas imposer sa largeur à la fenêtre. La
+    # largeur préférée varie beaucoup selon le système (594 px sous Windows) et n'est pas bornée :
+    # le volet fixe la largeur, les rangées du formulaire passent sous leur libellé si besoin.
     assert panel.minimumSizeHint().width() <= main_window.PAGE_DOCK_MIN_WIDTH
-    assert panel.sizeHint().width() <= main_window.PAGE_DOCK_WIDTH + 100
 
 
 def test_la_fenetre_ne_depasse_pas_l_ecran(app, window):
@@ -404,3 +405,12 @@ def test_le_volet_feuille_a_une_largeur_minimale(window):
     window.resizeDocks([dock], [10], Qt.Orientation.Horizontal)
     QApplication.processEvents()
     assert dock.width() >= main_window.PAGE_DOCK_MIN_WIDTH
+
+
+def test_le_volet_a_sa_largeur_initiale_a_la_premiere_apparition(window):
+    window.resize(1400, 800)
+    window.show()
+    window.set_mode(True)
+    QApplication.processEvents()
+    assert window._page_dock.width() == pytest.approx(main_window.PAGE_DOCK_WIDTH, abs=40)
+    window.hide()
