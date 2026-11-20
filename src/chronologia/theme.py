@@ -85,6 +85,10 @@ QGraphicsView {{ border: none; background: {SURFACE}; }}
 QStatusBar {{ background: {SURFACE}; border-top: 1px solid {BORDER}; color: {MUTED}; }}
 QStatusBar::item {{ border: none; }}
 QLabel {{ background: transparent; }}
+QLabel#dropOverlay {{
+    background: rgba(238, 240, 255, 245); border: 3px dashed {ACCENT}; border-radius: 14px;
+    color: {ACCENT}; font-size: 20px; font-weight: 600;
+}}
 
 QScrollBar:vertical {{ background: transparent; width: 12px; margin: 2px; }}
 QScrollBar:horizontal {{ background: transparent; height: 12px; margin: 2px; }}

@@ -249,7 +249,22 @@ T: dict[str, tuple[str, str]] = {
     "Modifier…": ("Edit…", "Modificar…"),
     "Supprimer": ("Delete", "Eliminar"),
     "Nouvel événement ici…": ("New event here…", "Nuevo evento aquí…"),
-    "Ouvrez un fichier CSV (Ctrl+O)": ("Open a CSV file (Ctrl+O)", "Abra un archivo CSV (Ctrl+O)"),
+    "Ouvrez un fichier CSV (Ctrl+O) ou glissez-le ici": (
+        "Open a CSV file (Ctrl+O) or drag it here",
+        "Abra un archivo CSV (Ctrl+O) o arrástrelo aquí",
+    ),
+    "Déposez un fichier CSV pour l'ouvrir": (
+        "Drop a CSV file to open it",
+        "Suelte un archivo CSV para abrirlo",
+    ),
+    "Seuls les fichiers CSV peuvent être déposés.": (
+        "Only CSV files can be dropped.",
+        "Solo se pueden soltar archivos CSV.",
+    ),
+    "%1 fichiers déposés : « %2 » est ouvert, les autres sont ignorés.": (
+        "%1 files dropped: “%2” is opened, the others are ignored.",
+        "%1 archivos soltados: se abre «%2», los demás se ignoran.",
+    ),
     "Nom": ("Name", "Nombre"),
     "Modifier la catégorie": ("Edit category", "Modificar la categoría"),
     "Modifier la catégorie…": ("Edit category…", "Modificar la categoría…"),

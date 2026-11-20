@@ -77,6 +77,8 @@ class TimelineView(QGraphicsView):
         self._selected: Event | None = None  # comparé par identité
         self._halo: QGraphicsRectItem | None = None
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setAcceptDrops(False)  # le dépôt d'un CSV est géré par la fenêtre
+        self.viewport().setAcceptDrops(False)
 
     # --- données ---------------------------------------------------------------------
 
@@ -382,7 +384,9 @@ class TimelineView(QGraphicsView):
         if layout is None or not layout.lanes:
             painter.setPen(muted)
             painter.drawText(
-                visible, Qt.AlignmentFlag.AlignCenter, self.tr("Ouvrez un fichier CSV (Ctrl+O)")
+                visible,
+                Qt.AlignmentFlag.AlignCenter,
+                self.tr("Ouvrez un fichier CSV (Ctrl+O) ou glissez-le ici"),
             )
             return
 

@@ -5,8 +5,15 @@ from __future__ import annotations
 from collections import Counter
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QAction, QCloseEvent, QKeySequence
+from PySide6.QtCore import QMimeData, QSize, Qt, QTimer
+from PySide6.QtGui import (
+    QAction,
+    QCloseEvent,
+    QDragEnterEvent,
+    QDragMoveEvent,
+    QDropEvent,
+    QKeySequence,
+)
 from PySide6.QtWidgets import (
     QDockWidget,
     QFileDialog,
@@ -52,6 +59,12 @@ class MainWindow(QMainWindow):
 
         self.view = TimelineView()
         self.setCentralWidget(self.view)
+        self.setAcceptDrops(True)  # glisser-déposer d'un CSV n'importe où dans la fenêtre
+        self._drop_overlay = QLabel(self.tr("Déposez un fichier CSV pour l'ouvrir"), self.view)
+        self._drop_overlay.setObjectName("dropOverlay")
+        self._drop_overlay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._drop_overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self._drop_overlay.hide()
 
         self.filters = FilterPanel()
         dock = QDockWidget(self.tr("Catégories"), self)
@@ -153,6 +166,7 @@ class MainWindow(QMainWindow):
             make_icon("search", "#8b91a1"), QLineEdit.ActionPosition.LeadingPosition
         )
         self.search.textChanged.connect(self.view.set_search)
+        self.search.setAcceptDrops(False)  # un fichier déposé ici ouvre le CSV, pas du texte
 
         tool_new = QAction(
             make_icon("plus", "#ffffff", "#ffffff"), self.tr("Nouvel événement"), self
@@ -402,6 +416,68 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(
             self.tr("PDF exporté : %1").replace("%1", Path(path).name), 5000
         )
+
+    # --- glisser-déposer -----------------------------------------------------------------
+
+    @staticmethod
+    def dropped_csv_files(mime: QMimeData) -> list[Path]:
+        """Fichiers CSV locaux d'un dépôt (les dossiers, URL distantes et autres types sont ignorés)."""
+        paths = []
+        for url in mime.urls():
+            if not url.isLocalFile():
+                continue
+            path = Path(url.toLocalFile())
+            if path.suffix.lower() == ".csv" and path.is_file():
+                paths.append(path)
+        return paths
+
+    def _show_drop_overlay(self, visible: bool) -> None:
+        if visible:
+            self._drop_overlay.setGeometry(self.view.rect().adjusted(8, 8, -8, -8))
+            self._drop_overlay.raise_()
+        self._drop_overlay.setVisible(visible)
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        if self.dropped_csv_files(event.mimeData()):
+            event.acceptProposedAction()
+            self._show_drop_overlay(True)
+        else:
+            event.ignore()
+            self.statusBar().showMessage(
+                self.tr("Seuls les fichiers CSV peuvent être déposés."), 4000
+            )
+
+    def dragMoveEvent(self, event: QDragMoveEvent) -> None:
+        if self.dropped_csv_files(event.mimeData()):
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragLeaveEvent(self, event) -> None:
+        self._show_drop_overlay(False)
+        event.accept()
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        self._show_drop_overlay(False)
+        paths = self.dropped_csv_files(event.mimeData())
+        if not paths:
+            event.ignore()
+            return
+        event.acceptProposedAction()
+        # ouverture différée : ne pas bloquer le gestionnaire de fichiers pendant une question
+        QTimer.singleShot(0, lambda: self._open_dropped(paths))
+
+    def _open_dropped(self, paths: list[Path]) -> None:
+        """Ouvre le premier CSV déposé (après avoir proposé d'enregistrer les modifications)."""
+        if not self._confirm_discard():
+            return
+        if self.load_file(paths[0]) and len(paths) > 1:
+            self.statusBar().showMessage(
+                self.tr("%1 fichiers déposés : « %2 » est ouvert, les autres sont ignorés.")
+                .replace("%1", str(len(paths)))
+                .replace("%2", paths[0].name),
+                6000,
+            )
 
     def _confirm_discard(self) -> bool:
         """Propose d'enregistrer les modifications. ``False`` : l'utilisateur annule."""

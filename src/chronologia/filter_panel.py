@@ -55,6 +55,8 @@ class FilterPanel(QWidget):
         layout.addWidget(self._list)
         self._list.setIconSize(QSize(16, 16))
         self._list.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._list.setAcceptDrops(False)  # le dépôt d'un CSV est géré par la fenêtre
+        self._list.viewport().setAcceptDrops(False)
         self._list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._list.setTextElideMode(Qt.TextElideMode.ElideRight)
 

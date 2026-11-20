@@ -344,7 +344,7 @@
         <translation>Ninguno</translation>
     </message>
     <message>
-        <location filename="../filter_panel.py" line="86"/>
+        <location filename="../filter_panel.py" line="88"/>
         <source>Modifier la catégorie…</source>
         <translation>Modificar la categoría…</translation>
     </message>
@@ -352,231 +352,246 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../main_window.py" line="57"/>
-        <location filename="../main_window.py" line="269"/>
-        <location filename="../main_window.py" line="288"/>
+        <location filename="../main_window.py" line="63"/>
+        <source>Déposez un fichier CSV pour l&apos;ouvrir</source>
+        <translation>Suelte un archivo CSV para abrirlo</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="70"/>
+        <location filename="../main_window.py" line="283"/>
+        <location filename="../main_window.py" line="302"/>
         <source>Catégories</source>
         <translation>Categorías</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="78"/>
+        <location filename="../main_window.py" line="91"/>
         <source>Catégories personnalisées illisibles, valeurs par défaut utilisées : %1</source>
         <translation>Categorías personalizadas ilegibles, se usan los valores por defecto: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="88"/>
+        <location filename="../main_window.py" line="101"/>
         <source>&amp;Ouvrir un CSV…</source>
         <translation>&amp;Abrir CSV…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="91"/>
+        <location filename="../main_window.py" line="104"/>
         <source>&amp;Enregistrer</source>
         <translation>&amp;Guardar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="94"/>
+        <location filename="../main_window.py" line="107"/>
         <source>Enregistrer &amp;sous…</source>
         <translation>Guardar &amp;como…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="97"/>
+        <location filename="../main_window.py" line="110"/>
         <source>E&amp;xporter en PDF…</source>
         <translation>E&amp;xportar a PDF…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="100"/>
+        <location filename="../main_window.py" line="113"/>
         <source>&amp;Quitter</source>
         <translation>&amp;Salir</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="103"/>
+        <location filename="../main_window.py" line="116"/>
         <source>&amp;Préférences…</source>
         <translation>&amp;Preferencias…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="106"/>
+        <location filename="../main_window.py" line="119"/>
         <source>&amp;Fichier</source>
         <translation>&amp;Archivo</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="114"/>
+        <location filename="../main_window.py" line="127"/>
         <source>&amp;Nouvel événement…</source>
         <translation>&amp;Nuevo evento…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="117"/>
-        <location filename="../main_window.py" line="204"/>
+        <location filename="../main_window.py" line="130"/>
+        <location filename="../main_window.py" line="218"/>
         <source>Annuler</source>
         <translation>Deshacer</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="120"/>
-        <location filename="../main_window.py" line="205"/>
+        <location filename="../main_window.py" line="133"/>
+        <location filename="../main_window.py" line="219"/>
         <source>Rétablir</source>
         <translation>Rehacer</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="129"/>
+        <location filename="../main_window.py" line="142"/>
         <source>&amp;Gérer les catégories…</source>
         <translation>&amp;Gestionar categorías…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="132"/>
+        <location filename="../main_window.py" line="145"/>
         <source>&amp;Édition</source>
         <translation>&amp;Edición</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="138"/>
+        <location filename="../main_window.py" line="151"/>
         <source>Zoom +</source>
         <translation>Acercar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="141"/>
+        <location filename="../main_window.py" line="154"/>
         <source>Zoom −</source>
         <translation>Alejar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="144"/>
+        <location filename="../main_window.py" line="157"/>
         <source>Ajuster</source>
         <translation>Ajustar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="149"/>
+        <location filename="../main_window.py" line="162"/>
         <source>Rechercher un événement…</source>
         <translation>Buscar un evento…</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="158"/>
+        <location filename="../main_window.py" line="172"/>
         <source>Nouvel événement</source>
         <translation>Nuevo evento</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="162"/>
+        <location filename="../main_window.py" line="176"/>
         <source>Outils</source>
         <translation>Herramientas</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="183"/>
+        <location filename="../main_window.py" line="197"/>
         <source>&amp;Affichage</source>
         <translation>&amp;Ver</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="196"/>
+        <location filename="../main_window.py" line="210"/>
         <source>Langue</source>
         <translation>Idioma</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="197"/>
+        <location filename="../main_window.py" line="211"/>
         <source>La nouvelle langue sera appliquée au prochain démarrage de Chronologia.</source>
         <translation>El nuevo idioma se aplicará la próxima vez que se inicie Chronologia.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="233"/>
+        <location filename="../main_window.py" line="247"/>
         <source>Supprimer l&apos;événement</source>
         <translation>Eliminar el evento</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="234"/>
+        <location filename="../main_window.py" line="248"/>
         <source>Supprimer « %1 » ? (Annulable avec Ctrl+Z)</source>
         <translation>¿Eliminar «%1»? (Se puede deshacer con Ctrl+Z)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="290"/>
+        <location filename="../main_window.py" line="304"/>
         <source>Catégories appliquées mais non enregistrées : %1</source>
         <translation>Categorías aplicadas pero no guardadas: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="326"/>
+        <location filename="../main_window.py" line="340"/>
         <source>Ouvrir un CSV</source>
         <translation>Abrir un CSV</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="328"/>
+        <location filename="../main_window.py" line="342"/>
         <source>Fichiers CSV (*.csv);;Tous les fichiers (*)</source>
         <translation>Archivos CSV (*.csv);;Todos los archivos (*)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="338"/>
+        <location filename="../main_window.py" line="352"/>
         <source>Import impossible</source>
         <translation>No se puede importar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="361"/>
+        <location filename="../main_window.py" line="375"/>
         <source>Enregistrer sous</source>
         <translation>Guardar como</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="361"/>
+        <location filename="../main_window.py" line="375"/>
         <source>Fichiers CSV (*.csv)</source>
         <translation>Archivos CSV (*.csv)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="373"/>
+        <location filename="../main_window.py" line="387"/>
         <source>Enregistrement impossible</source>
         <translation>No se puede guardar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="379"/>
+        <location filename="../main_window.py" line="393"/>
         <source>Enregistré : %1</source>
         <translation>Guardado: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="391"/>
+        <location filename="../main_window.py" line="405"/>
         <source>Exporter en PDF</source>
         <translation>Exportar a PDF</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="391"/>
+        <location filename="../main_window.py" line="405"/>
         <source>Fichiers PDF (*.pdf)</source>
         <translation>Archivos PDF (*.pdf)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="400"/>
+        <location filename="../main_window.py" line="414"/>
         <source>Export impossible</source>
         <translation>No se puede exportar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="403"/>
+        <location filename="../main_window.py" line="417"/>
         <source>PDF exporté : %1</source>
         <translation>PDF exportado: %1</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="412"/>
+        <location filename="../main_window.py" line="447"/>
+        <source>Seuls les fichiers CSV peuvent être déposés.</source>
+        <translation>Solo se pueden soltar archivos CSV.</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="476"/>
+        <source>%1 fichiers déposés : « %2 » est ouvert, les autres sont ignorés.</source>
+        <translation>%1 archivos soltados: se abre «%2», los demás se ignoran.</translation>
+    </message>
+    <message>
+        <location filename="../main_window.py" line="488"/>
         <source>Modifications non enregistrées</source>
         <translation>Cambios sin guardar</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="413"/>
+        <location filename="../main_window.py" line="489"/>
         <source>Enregistrer les modifications avant de continuer ?</source>
         <translation>¿Guardar los cambios antes de continuar?</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="453"/>
+        <location filename="../main_window.py" line="529"/>
         <source>Import terminé avec des anomalies</source>
         <translation>Importación terminada con incidencias</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="455"/>
+        <location filename="../main_window.py" line="531"/>
         <source>%1 événements importés, %2 lignes ignorées, %3 corrigées.</source>
         <translation>%1 eventos importados, %2 filas omitidas, %3 corregidas.</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="460"/>
+        <location filename="../main_window.py" line="536"/>
         <source>ligne</source>
         <translation>fila</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="469"/>
+        <location filename="../main_window.py" line="545"/>
         <source>%1 événements affichés / %2</source>
         <translation>%1 eventos mostrados / %2</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="473"/>
+        <location filename="../main_window.py" line="549"/>
         <source>%1 titres masqués (zoomez pour les voir)</source>
         <translation>%1 títulos ocultos (acerque para verlos)</translation>
     </message>
     <message>
-        <location filename="../main_window.py" line="478"/>
+        <location filename="../main_window.py" line="554"/>
         <source>%1 correspondances</source>
         <translation>%1 coincidencias</translation>
     </message>
@@ -737,24 +752,24 @@
 <context>
     <name>TimelineView</name>
     <message>
-        <location filename="../timeline_view.py" line="259"/>
+        <location filename="../timeline_view.py" line="261"/>
         <source>Modifier…</source>
         <translation>Modificar…</translation>
     </message>
     <message>
-        <location filename="../timeline_view.py" line="262"/>
+        <location filename="../timeline_view.py" line="264"/>
         <source>Supprimer</source>
         <translation>Eliminar</translation>
     </message>
     <message>
-        <location filename="../timeline_view.py" line="269"/>
+        <location filename="../timeline_view.py" line="271"/>
         <source>Nouvel événement ici…</source>
         <translation>Nuevo evento aquí…</translation>
     </message>
     <message>
-        <location filename="../timeline_view.py" line="385"/>
-        <source>Ouvrez un fichier CSV (Ctrl+O)</source>
-        <translation>Abra un archivo CSV (Ctrl+O)</translation>
+        <location filename="../timeline_view.py" line="389"/>
+        <source>Ouvrez un fichier CSV (Ctrl+O) ou glissez-le ici</source>
+        <translation>Abra un archivo CSV (Ctrl+O) o arrástrelo aquí</translation>
     </message>
 </context>
 </TS>
