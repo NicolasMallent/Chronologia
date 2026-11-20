@@ -20,3 +20,28 @@ def _isolated_settings(tmp_path_factory):
         QSettings.Scope.UserScope,
         str(tmp_path_factory.mktemp("qsettings")),
     )
+
+
+@pytest.fixture(autouse=True)
+def _delete_widgets_after_each_test():
+    """Détruit les fenêtres et dialogues créés par un test, tant que Python fonctionne.
+
+    Sans cela, des widgets restent vivants jusqu'à l'arrêt de l'interpréteur ; PySide les détruit
+    alors dans le désordre et provoque parfois une erreur de segmentation à la sortie (ce qui fait
+    échouer la CI même quand tous les tests passent).
+    """
+    yield
+    import gc
+
+    from PySide6.QtCore import QEvent
+    from PySide6.QtWidgets import QApplication
+
+    app = QApplication.instance()
+    if app is None:
+        return
+    for widget in app.topLevelWidgets():
+        widget.hide()  # pas de close() : il pourrait poser la question « enregistrer ? »
+        widget.deleteLater()
+    app.sendPostedEvents(None, QEvent.Type.DeferredDelete.value)
+    gc.collect()
+    app.processEvents()

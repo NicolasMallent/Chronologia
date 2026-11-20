@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QColorDialog,
@@ -175,15 +174,17 @@ class CategoriesDialog(QDialog):
         }
 
     def _selected(self) -> Category | None:
-        item = self._list.currentItem()
-        return item.data(Qt.ItemDataRole.UserRole) if item else None
+        # la catégorie est retrouvée par sa position : un objet Python rangé dans les données
+        # d'un élément Qt serait détruit après la fermeture de l'interpréteur (plantage à la sortie)
+        row = self._list.currentRow()
+        categories = list(self._work)
+        return categories[row] if 0 <= row < len(categories) else None
 
     def _refresh(self, select: Category | None = None) -> None:
         self._list.blockSignals(True)
         self._list.clear()
         for category in self._work:
             item = QListWidgetItem(_swatch(category.color_hex), category.name)
-            item.setData(Qt.ItemDataRole.UserRole, category)
             self._list.addItem(item)
             if category is select:
                 self._list.setCurrentItem(item)

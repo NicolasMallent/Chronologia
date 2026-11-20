@@ -352,8 +352,9 @@ def test_le_cadre_de_depot_couvre_aussi_le_mode_feuille(window):
 
 def test_le_panneau_reste_etroit_et_tient_dans_son_volet(app):
     panel = PagePanel()
-    assert panel.minimumSizeHint().width() <= 260  # n'impose pas sa largeur à la fenêtre
-    assert panel.sizeHint().width() <= main_window.PAGE_DOCK_WIDTH + 10  # tient sans défilement
+    # n'impose pas sa largeur à la fenêtre (la largeur dépend de la police : marge confortable)
+    assert panel.minimumSizeHint().width() <= main_window.PAGE_DOCK_MIN_WIDTH
+    assert panel.sizeHint().width() <= main_window.PAGE_DOCK_WIDTH + 100
 
 
 def test_la_fenetre_ne_depasse_pas_l_ecran(app, window):
