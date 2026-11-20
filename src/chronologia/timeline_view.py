@@ -13,10 +13,10 @@ from PySide6.QtWidgets import (
     QGraphicsScene,
     QGraphicsSimpleTextItem,
     QGraphicsView,
-    QMenu,
 )
 
 from .categories import CategoryRegistry
+from .editing_view import EditableView
 from .layout import Layout, LayoutItem, LayoutOptions, compute_layout
 from .measure import make_measurer
 from .model import Event
@@ -47,13 +47,8 @@ def event_tooltip(event: Event) -> str:
     return "\n".join(lines)
 
 
-class TimelineView(QGraphicsView):
+class TimelineView(EditableView):
     layoutChanged = Signal()  # nombre d'événements affichés ou échelle modifiés
-    editRequested = Signal(object)  # Event
-    deleteRequested = Signal(object)  # Event
-    newRequested = Signal(
-        str, str
-    )  # date de début proposée (aaaa), couleur de la ligne ; vides si inconnues
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -74,11 +69,7 @@ class TimelineView(QGraphicsView):
         self._font.setPointSizeF(9.0)
         self._matches = 0
         self._groups: dict[QGraphicsItemGroup, Event] = {}
-        self._selected: Event | None = None  # comparé par identité
         self._halo: QGraphicsRectItem | None = None
-        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setAcceptDrops(False)  # le dépôt d'un CSV est géré par la fenêtre
-        self.viewport().setAcceptDrops(False)
 
     # --- données ---------------------------------------------------------------------
 
@@ -100,15 +91,6 @@ class TimelineView(QGraphicsView):
         self._events = events
         if rebuild:
             self.rebuild()
-
-    @property
-    def selected_event(self) -> Event | None:
-        return self._selected
-
-    def select(self, event: Event | None) -> None:
-        """Met un événement en valeur (cadre autour de la barre et du titre) ; ``None`` efface."""
-        self._selected = event
-        self._update_selection()
 
     def _update_selection(self) -> None:
         if self._halo is not None:
@@ -222,12 +204,7 @@ class TimelineView(QGraphicsView):
         else:  # défilement horizontal (pavé tactile)
             super().wheelEvent(event)
 
-    # --- interactions d'édition ------------------------------------------------------
-
-    def mousePressEvent(self, event) -> None:
-        if event.button() in (Qt.MouseButton.LeftButton, Qt.MouseButton.RightButton):
-            self.select(self._event_at(event.position().toPoint()))
-        super().mousePressEvent(event)
+    # --- interactions d'édition (le reste est dans EditableView) ----------------------
 
     def _event_at(self, pos) -> Event | None:
         item = self.itemAt(pos)
@@ -235,43 +212,9 @@ class TimelineView(QGraphicsView):
             item = item.parentItem()
         return self._groups.get(item) if item is not None else None
 
-    def mouseDoubleClickEvent(self, event) -> None:
-        found = self._event_at(event.position().toPoint())
-        if found is not None:
-            self.editRequested.emit(found)
-            event.accept()
-        else:
-            super().mouseDoubleClickEvent(event)
-
-    def keyPressEvent(self, event) -> None:
-        """Suppr : supprime l'événement sélectionné (après confirmation) ; Échap : désélectionne."""
-        if event.key() == Qt.Key.Key_Delete and self._selected is not None:
-            self.deleteRequested.emit(self._selected)
-            event.accept()
-        elif event.key() == Qt.Key.Key_Escape and self._selected is not None:
-            self.select(None)
-            event.accept()
-        else:
-            super().keyPressEvent(event)
-
-    def contextMenuEvent(self, event) -> None:
-        found = self._event_at(event.pos())
-        menu = QMenu(self)
-        if found is not None:
-            menu.addAction(self.tr("Modifier…")).triggered.connect(
-                lambda: self.editRequested.emit(found)
-            )
-            menu.addAction(self.tr("Supprimer")).triggered.connect(
-                lambda: self.deleteRequested.emit(found)
-            )
-        else:
-            year = self.year_at_view_x(event.pos().x())
-            hint = f"{int(year):04d}" if year is not None and year >= 1 else ""
-            color = self.lane_color_at(event.pos().y())
-            menu.addAction(self.tr("Nouvel événement ici…")).triggered.connect(
-                lambda: self.newRequested.emit(hint, color)
-            )
-        menu.exec(event.globalPos())
+    def _year_hint(self, pos) -> str:
+        year = self.year_at_view_x(pos.x())
+        return f"{int(year):04d}" if year is not None and year >= 1 else ""
 
     # --- construction de la scène ----------------------------------------------------
 
