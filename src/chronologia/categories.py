@@ -133,6 +133,9 @@ class CategoryRegistry:
         target = max(0, min(len(self._items) - 1, index + offset))
         self._items.insert(target, self._items.pop(index))
 
+    def by_name(self, name: str) -> Category | None:
+        return next((c for c in self._items if c.name == name), None)
+
     def for_color(self, color: str) -> Category | None:
         hex_color = resolve_color(color)
         return next((c for c in self._items if c.color_hex == hex_color), None)

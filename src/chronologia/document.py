@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from PySide6.QtCore import QCoreApplication, QObject, Signal
 from PySide6.QtGui import QUndoCommand, QUndoStack
 
@@ -59,6 +61,35 @@ class _Remove(QUndoCommand):
         self._doc.changed.emit(self._event)
 
 
+class _Recolor(QUndoCommand):
+    """Change la couleur de tous les événements d'une couleur donnée (renommage de catégorie)."""
+
+    def __init__(self, doc: Document, changes: dict[str, str]) -> None:
+        super().__init__(
+            QCoreApplication.translate("Document", "Changer la couleur d'une catégorie")
+        )
+        self._doc = doc
+        # (ancien, nouveau) pour chaque événement concerné, retrouvés par identité
+        self._pairs = [
+            (e, replace(e, color=changes[e.color_hex]))
+            for e in doc.events
+            if e.color_hex in changes
+        ]
+
+    def __bool__(self) -> bool:
+        return bool(self._pairs)
+
+    def redo(self) -> None:
+        for old, new in self._pairs:
+            self._doc.events[_index_of(self._doc.events, old)] = new
+        self._doc.changed.emit(None)
+
+    def undo(self) -> None:
+        for old, new in self._pairs:
+            self._doc.events[_index_of(self._doc.events, new)] = old
+        self._doc.changed.emit(None)
+
+
 class Document(QObject):
     """``changed(événement)`` : émis après chaque modification, annulation ou rétablissement.
     L'argument est l'événement à mettre en évidence, ou ``None``."""
@@ -84,3 +115,13 @@ class Document(QObject):
 
     def remove(self, event: Event) -> None:
         self.stack.push(_Remove(self, event))
+
+    def recolor(self, changes: dict[str, str]) -> int:
+        """Recolore les événements : ``changes`` associe une couleur ``#rrggbb`` à la nouvelle.
+
+        Renvoie le nombre d'événements modifiés (annulable en une fois).
+        """
+        command = _Recolor(self, changes)
+        if command:
+            self.stack.push(command)
+        return len(command._pairs)

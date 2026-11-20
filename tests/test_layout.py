@@ -133,7 +133,7 @@ def test_evenement_dans_une_periode_passe_sur_une_autre_ligne():
 
 def test_evenements_qui_se_suivent_restent_sur_la_meme_ligne_meme_colles():
     evs = events("1900,1900,A,red\n1901,1901,B,red\n1902,1902,C,red\n")
-    # à 0,5 px par an, les losanges se recouvrent visuellement, mais ils se suivent dans le temps
+    # à 0,5 px par an, les rectangles se recouvrent visuellement, mais ils se suivent dans le temps
     assert set(sublanes(evs, px_per_year=0.5).values()) == {0}
 
 
@@ -275,7 +275,7 @@ def test_titre_long_passe_sur_plusieurs_lignes_si_permis():
     assert une.label_state == "truncated" and len(une.label_lines) == 1
     assert trois.label_state == "full" and len(trois.label_lines) > 1
     assert " ".join(trois.label_lines) == "Un titre assez long pour deux lignes"
-    limit = 120 - LayoutOptions().gap  # place avant l'élément suivant (losange compris)
+    limit = 120 - LayoutOptions().gap  # place avant l'élément suivant (rectangle compris)
     assert all(trois.label_x + measure(line) <= limit - 6 + 1e-9 for line in trois.label_lines)
 
 
@@ -318,3 +318,36 @@ def test_une_seule_ligne_reste_le_defaut():
     assert LayoutOptions().max_label_lines == 1
     with pytest.raises(ValueError):
         LayoutOptions(max_label_lines=0)
+
+
+def test_categorie_vide_affichee_a_l_ecran_pas_a_l_export():
+    registry = default_registry()
+    evs = events("1900,1900,A,black\n")
+    export = compute_layout(evs, registry, measure)
+    ecran = compute_layout(evs, registry, measure, include_empty=True)
+    assert [lane.name for lane in export.lanes] == ["Contexte politique international"]
+    assert [lane.name for lane in ecran.lanes] == [c.name for c in registry]  # ordre du registre
+    vides = [lane for lane in ecran.lanes if not lane.items]
+    assert len(vides) == len(registry) - 1 and all(lane.height > 0 for lane in vides)
+    filtre = compute_layout(
+        evs, registry, measure, visible_categories={"Luttes agricoles"}, include_empty=True
+    )
+    assert [lane.name for lane in filtre.lanes] == ["Luttes agricoles"]
+
+
+def test_aucune_ligne_vide_tant_qu_aucun_fichier_n_est_ouvert():
+    layout = compute_layout([], default_registry(), measure, include_empty=True)
+    assert layout.lanes == ()
+
+
+def test_seules_des_categories_vides_cochees_restent_affichees():
+    evs = events("1900,1900,A,black\n")
+    layout = compute_layout(
+        evs,
+        default_registry(),
+        measure,
+        visible_categories={"Luttes agricoles"},
+        include_empty=True,
+    )
+    assert [lane.name for lane in layout.lanes] == ["Luttes agricoles"]
+    assert layout.ticks == () and layout.x_max == 0.0

@@ -344,7 +344,7 @@ def paint_poster(painter: QPainter, plan: PosterPlan, theme: PrintTheme = PRINT_
             )
 
     # événements
-    marker = plan.options.marker_size
+    marker = plan.options.point_width
     for lane in layout.lanes:
         for item in lane.items:
             color = QColor(item.event.color_hex)

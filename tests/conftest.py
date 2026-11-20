@@ -10,6 +10,10 @@ def _isolated_settings(tmp_path_factory):
     """Les tests n'écrivent jamais dans la configuration réelle de l'utilisateur."""
     from PySide6.QtCore import QSettings
 
+    config = tmp_path_factory.mktemp("config")  # catégories de l'utilisateur (categories.py)
+    os.environ["XDG_CONFIG_HOME"] = str(config)
+    os.environ["APPDATA"] = str(config)
+
     QSettings.setDefaultFormat(QSettings.Format.IniFormat)
     QSettings.setPath(
         QSettings.Format.IniFormat,

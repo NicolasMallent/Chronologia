@@ -38,7 +38,8 @@ _TICK_STEPS = (1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000)
 class LayoutOptions:
     px_per_year: float = 10.0
     line_height: float = 14.0
-    marker_size: float = 12.0  # losange des événements ponctuels, hauteur minimale d'une barre
+    marker_size: float = 12.0  # largeur minimale d'une barre, hauteur minimale d'une ligne
+    point_width: float = 6.0  # largeur du rectangle vertical des événements ponctuels
     padding: float = 3.0
     gap: float = 6.0  # espace minimal entre la fin d'un titre et l'élément suivant
     max_label_width: float = 1000.0  # largeur max d'un titre placé à côté d'un élément
@@ -69,12 +70,12 @@ LABEL_HIDDEN = "hidden"
 @dataclass(frozen=True)
 class LayoutItem:
     event: Event
-    x0: float  # début de la barre ; pour un événement ponctuel, centre du losange
+    x0: float  # début de la barre ; pour un événement ponctuel, centre du rectangle
     x1: float  # fin de la barre ; égal à x0 pour un événement ponctuel
     left: float  # emprise horizontale (forme + titre affiché)
     right: float
     y: float  # haut de la forme, relatif au haut de la mise en page
-    height: float  # hauteur de la forme (barre ou losange) ; le titre est centré dessus
+    height: float  # hauteur de la forme (barre ou rectangle vertical) ; le titre est centré dessus
     sublane: int
     label_lines: tuple[str, ...]  # vide si le titre est caché
     label_inside: bool
@@ -297,7 +298,7 @@ def _place_label(
     sur plusieurs lignes si permis (le moins de lignes possible, dans la barre en cas d'égalité),
     puis tronqué avec « … » dans l'emplacement le plus large, enfin caché.
     """
-    half = opts.marker_size / 2
+    half = opts.point_width / 2
     pad = opts.padding
     lh = opts.line_height
     title = draft.event.title
@@ -347,15 +348,19 @@ def compute_layout(
     options: LayoutOptions | None = None,
     visible_categories: set[str] | None = None,
     time_range: tuple[float, float] | None = None,
+    include_empty: bool = False,
 ) -> Layout:
     """Calcule la frise.
 
     ``visible_categories`` : noms de catégories à afficher (``None`` = toutes).
+    ``include_empty`` : affiche aussi les catégories du registre sans événement (ligne vide) ;
+    l'écran le demande pour qu'une catégorie qu'on vient de créer soit visible, pas l'export.
     ``time_range`` : (début, fin) en années ; seuls les événements qui l'intersectent sont gardés.
     """
     opts = options or LayoutOptions()
+    all_events = list(events)
     selected: list[tuple[str, str, Event]] = []
-    for event in events:
+    for event in all_events:
         name = registry.category_name(event)
         if visible_categories is not None and name not in visible_categories:
             continue
@@ -366,24 +371,36 @@ def compute_layout(
         found = registry.for_color(event.color)
         selected.append((name, found.color_hex if found else event.color_hex, event))
 
-    if not selected:
+    # sans aucun événement (rien d'ouvert), pas de lignes vides : l'écran affiche l'invite
+    empty_lanes = (
+        include_empty
+        and bool(all_events)
+        and any(visible_categories is None or c.name in visible_categories for c in registry)
+    )
+    if not selected and not empty_lanes:
         t0, t1 = time_range if time_range else (0.0, 0.0)
         return Layout((), (), 0.0, 0.0, 0.0, t0, t1)
 
     if time_range:
         t0, t1 = time_range
-    else:
+    elif selected:
         t0 = min(start_position(e.start) for _, _, e in selected)
         t1 = max(end_position(e.end) for _, _, e in selected)
+    else:  # que des catégories vides : pas d'axe
+        t0 = t1 = 0.0
 
     # ordre des lignes : celui du registre, puis les catégories implicites par première apparition
     order = {c.name: i for i, c in enumerate(registry)}
     by_lane: dict[str, tuple[str, list[Event]]] = {}
     for name, color_hex, event in sorted(selected, key=lambda s: start_position(s[2].start)):
         by_lane.setdefault(name, (color_hex, []))[1].append(event)
+    if empty_lanes:
+        for category in registry:
+            if visible_categories is None or category.name in visible_categories:
+                by_lane.setdefault(category.name, (category.color_hex, []))
     lane_names = sorted(by_lane, key=lambda n: (order.get(n, len(order)),))  # tri stable
 
-    half = opts.marker_size / 2
+    half = opts.point_width / 2
     row_h = opts.row_height
     x_limit = (t1 - t0) * opts.px_per_year if time_range else None
     counts = {LABEL_FULL: 0, LABEL_TRUNCATED: 0, LABEL_HIDDEN: 0}
@@ -406,7 +423,7 @@ def compute_layout(
                 right = x1
             drafts.append(_Draft(event, x0, x1, sub, row_h, right=right))
 
-        n_sub = max(sublanes) + 1
+        n_sub = max(sublanes, default=0) + 1  # une catégorie vide garde une ligne
         for k in range(n_sub):
             row = sorted((d for d in drafts if d.sublane == k), key=lambda d: d.x0)
             for i, draft in enumerate(row):
@@ -446,9 +463,9 @@ def compute_layout(
     all_items = [item for lane in lanes for item in lane.items]
     return Layout(
         lanes=tuple(lanes),
-        ticks=make_ticks(t0, t1, opts),
-        x_min=min(i.left for i in all_items),
-        x_max=max(i.right for i in all_items),
+        ticks=make_ticks(t0, t1, opts) if all_items else (),
+        x_min=min((i.left for i in all_items), default=0.0),
+        x_max=max((i.right for i in all_items), default=0.0),
         height=y - opts.lane_spacing,
         t_start=t0,
         t_end=t1,
